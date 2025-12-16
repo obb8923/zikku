@@ -38,7 +38,7 @@ export const RootStack = () => {
       }}
       onStateChange={handleStateChange}
     >
-      {isOnboardingCompleted ? <AppTab /> : <OnboardingStack />}
+      {!isOnboardingCompleted ? <AppTab /> : <OnboardingStack />}
     </NavigationContainer>
   );
 };

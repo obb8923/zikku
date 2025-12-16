@@ -24,7 +24,7 @@
       "@stores/*": ["src/shared/stores/*"],
       "@shared-types/*": ["src/shared/types/*"],
       "@services/*": ["src/shared/services/*"],
-      "@i18n/*": ["src/shared/i18n/*"]
+      "@i18n/*": ["src/shared/libs/i18n/*"]
     }
   }
 }

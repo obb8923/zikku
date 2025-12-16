@@ -30,6 +30,6 @@ module.exports = {
         allowUndefined: true,
       },
     ],
-    'react-native-worklets/plugin'// 무조건 마지막에 추가
+    'react-native-worklets/plugin'
   ],
 };
