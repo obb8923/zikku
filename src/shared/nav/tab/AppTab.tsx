@@ -1,7 +1,7 @@
 import React from 'react';
-import {GraphStack} from '@nav/stack/GraphStack';
-import {SettingStack} from '@nav/stack/SettingStack';
-import {PeopleStack} from '@nav/stack/PeopleStack';
+import {ArchiveStack} from '@/shared/nav/stack/ArchiveStack';
+import {MoreStack} from '@/shared/nav/stack/MoreStack';
+import {MapStack} from '@/shared/nav/stack/MapStack';
 import { useActiveTab } from '@stores/tabStore';
 import { TAB_NAME } from '@constants/TAB_NAV_OPTIONS';
 
@@ -10,14 +10,14 @@ export const AppTab = () => {
  
   // 현재 활성화된 탭에 따라 해당 스택을 렌더링
   switch (activeTab) {
-    case TAB_NAME.PEOPLE:
-      return <PeopleStack />;
-    case TAB_NAME.GRAPH:
-      return <GraphStack />;
-    case TAB_NAME.SETTING:
-      return <SettingStack />;
+    case TAB_NAME.MAP:
+      return <MapStack />;
+    case TAB_NAME.ARCHIVE:
+      return <ArchiveStack />;
+    case TAB_NAME.MORE:
+      return <MoreStack />;
     default:
-      return <PeopleStack />; 
+      return <MapStack />; 
   }
 };
 

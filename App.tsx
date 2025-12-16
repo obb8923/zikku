@@ -1,30 +1,24 @@
 import './global.css';
 import 'intl-pluralrules';
 import '@i18n/index';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { StatusBar, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PortalProvider } from '@gorhom/portal';
 import { AppNavigation } from '@nav/index';
-import { useInitStore } from '@stores/initStore';
-import { useThemeStore } from '@stores/themeStore';
+import { useInitStoreEffect } from '@stores/initStore';
 
 export default function App() {
-  const initialize = useInitStore((state) => state.initialize);
-  const currentTheme = useThemeStore((state) => state.currentTheme);
-
-  useEffect(() => {
-    initialize();
-  }, [initialize]);
+  useInitStoreEffect();
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <PortalProvider>
-          <View style={{flex:1}} className={currentTheme}>
+          <View style={{flex:1}}>
             <StatusBar 
-              barStyle={currentTheme === 'dark' ? 'light-content' : 'dark-content'} 
+              barStyle='light-content' 
               translucent={true}
             />
             <AppNavigation />

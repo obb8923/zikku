@@ -3,7 +3,6 @@ import { OnboardingStack } from "@nav/stack/OnboardingStack";
 import { AppTab } from "@nav/tab/AppTab";
 import { useOnboardingStore } from '@stores/onboardingStore';
 import { useRef } from 'react';
-import { logScreenView } from '@services/analytics';
 
 export const RootStack = () => {
   const { isOnboardingCompleted, isLoading } = useOnboardingStore();
@@ -19,11 +18,10 @@ export const RootStack = () => {
     return route.name;
   };
 
-  const handleStateChange = async () => {
+  const handleStateChange = () => {
     const currentRouteName = getActiveRouteName(navigationRef.current?.getRootState?.());
     if (currentRouteName && routeNameRef.current !== currentRouteName) {
       routeNameRef.current = currentRouteName;
-      await logScreenView(currentRouteName);
     }
   };
 
@@ -37,9 +35,6 @@ export const RootStack = () => {
       onReady={() => {
         const currentRouteName = getActiveRouteName(navigationRef.current?.getRootState?.());
         routeNameRef.current = currentRouteName;
-        if (currentRouteName) {
-          logScreenView(currentRouteName);
-        }
       }}
       onStateChange={handleStateChange}
     >

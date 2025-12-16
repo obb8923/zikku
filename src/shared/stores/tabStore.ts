@@ -25,7 +25,7 @@ interface TabStore {
 // Zustand 스토어 생성
 export const useTabStore = create<TabStore>((set) => ({
   // 초기 상태
-  activeTab: TAB_NAME.PEOPLE,
+  activeTab: TAB_NAME.MAP,
   isTabBarVisible: false,
   pendingSubscriptionNav: false,
 
