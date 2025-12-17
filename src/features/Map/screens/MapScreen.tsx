@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -6,6 +6,7 @@ import type { MapStackParamList } from '@nav/stack/MapStack';
 import { launchCamera, launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
 import { usePermissionStore } from '@stores/permissionStore';
 import MapView, { PROVIDER_DEFAULT, Region } from 'react-native-maps';
+import { useLocationStore } from '@stores/locationStore';
 
 type MapScreenNavigationProp = NativeStackNavigationProp<MapStackParamList, 'Map'>;
 
@@ -19,10 +20,17 @@ const INITIAL_REGION: Region = {
 export const MapScreen = () => {
   const navigation = useNavigation<MapScreenNavigationProp>();
   const ensureCameraAndPhotos = usePermissionStore((s) => s.ensureCameraAndPhotos);
+  const requestLocationPermission = usePermissionStore((s) => s.requestLocationPermission);
+  const setCurrentLocation = useLocationStore((s) => s.setCurrentLocation);
 
   const [isFabOpen, setIsFabOpen] = useState(false);
   const fabAnimation = useRef(new Animated.Value(0)).current;
   const mapRef = useRef<MapView>(null);
+
+  // 화면 진입 시 위치 권한 요청
+  useEffect(() => {
+    void requestLocationPermission();
+  }, [requestLocationPermission]);
 
   const { cameraButtonTranslateY, galleryButtonTranslateY, buttonScale } = useMemo(() => {
     const cameraButtonTranslateY = fabAnimation.interpolate({
@@ -125,6 +133,28 @@ export const MapScreen = () => {
         showsUserLocation={true}
         showsMyLocationButton={false}
         toolbarEnabled={false}
+        onUserLocationChange={(event) => {
+          const coordinate = event.nativeEvent.coordinate;
+          if (!coordinate) {
+            return;
+          }
+
+          const { latitude, longitude } = coordinate;
+          setCurrentLocation({ latitude, longitude });
+
+          // 처음 위치를 받았을 때 지도의 중심을 현재 위치로 이동
+          if (mapRef.current) {
+            mapRef.current.animateToRegion(
+              {
+                latitude,
+                longitude,
+                latitudeDelta: INITIAL_REGION.latitudeDelta,
+                longitudeDelta: INITIAL_REGION.longitudeDelta,
+              },
+              500,
+            );
+          }
+        }}
       />
 
       {/* 갤러리 버튼 */}
