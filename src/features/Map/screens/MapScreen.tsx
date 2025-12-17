@@ -1,12 +1,20 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MapStackParamList } from '@nav/stack/MapStack';
 import { launchCamera, launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
 import { usePermissionStore } from '@stores/permissionStore';
+import MapView, { PROVIDER_DEFAULT, Region } from 'react-native-maps';
 
 type MapScreenNavigationProp = NativeStackNavigationProp<MapStackParamList, 'Map'>;
+
+const INITIAL_REGION: Region = {
+  latitude: 37.5665,
+  longitude: 126.9780,
+  latitudeDelta: 0.0922,
+  longitudeDelta: 0.0421,
+};
 
 export const MapScreen = () => {
   const navigation = useNavigation<MapScreenNavigationProp>();
@@ -14,6 +22,7 @@ export const MapScreen = () => {
 
   const [isFabOpen, setIsFabOpen] = useState(false);
   const fabAnimation = useRef(new Animated.Value(0)).current;
+  const mapRef = useRef<MapView>(null);
 
   const { cameraButtonTranslateY, galleryButtonTranslateY, buttonScale } = useMemo(() => {
     const cameraButtonTranslateY = fabAnimation.interpolate({
@@ -107,10 +116,16 @@ export const MapScreen = () => {
   }, [isFabOpen, openFab, closeFab]);
 
   return (
-    <View className="flex-1 bg-blue-500">
-      <View className="flex-1 items-center justify-center">
-        <Text>MapScreen</Text>
-      </View>
+    <View className="flex-1">
+      <MapView
+        ref={mapRef}
+        provider={PROVIDER_DEFAULT}
+        style={StyleSheet.absoluteFillObject}
+        initialRegion={INITIAL_REGION}
+        showsUserLocation={true}
+        showsMyLocationButton={false}
+        toolbarEnabled={false}
+      />
 
       {/* 갤러리 버튼 */}
       <Animated.View
