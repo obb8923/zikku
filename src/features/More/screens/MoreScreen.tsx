@@ -11,7 +11,7 @@ export const MoreScreen = () => {
   const navigation = useNavigation<MoreScreenNavigationProp>();
 
   const handleLoginPress = () => {
-    navigation.navigate('Login');
+    navigation.navigate('Auth');
   };
 
   return (

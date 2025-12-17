@@ -1,7 +1,5 @@
-//
-//  AppleSignInModule.m.m
-//  zikku
-//
-//  Created by 박정빈 on 12/17/25.
-//
+#import <React/RCTBridgeModule.h>
 
+@interface RCT_EXTERN_MODULE(AppleSignInModule, NSObject)
+RCT_EXTERN_METHOD(signInWithApple:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
+@end

@@ -1,12 +1,8 @@
 import { useState, useEffect } from 'react';
+import { Platform } from 'react-native';
 import { useOnboardingStore } from './onboardingStore';
-/**
- * 앱 초기화 로직을 관리하는 훅
- * - 언어 설정 로드
- * - 온보딩 상태 확인
- * 
- * 참고: 각 화면에서 필요할 때 추가 초기화 수행
- */
+import { SUPABASE_WEB_CLIENT_KEY } from '@env';
+
 export const useAppInitialization = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [initializationError, setInitializationError] = useState<Error | null>(null);
@@ -17,6 +13,19 @@ export const useAppInitialization = () => {
     let isMounted = true;
 
     const initializeApp = async () => {
+      // 0. Google Sign-In 설정 (Android에서만)
+      if (Platform.OS !== 'ios') {
+        try {
+          const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
+          GoogleSignin.configure({
+            webClientId: SUPABASE_WEB_CLIENT_KEY,
+            scopes: ['profile', 'email'],
+          });
+          if (__DEV__) console.log('[useAppInitialization] Google Sign-In configured');
+        } catch (error) {
+          if (__DEV__) console.error('[useAppInitialization] Google Sign-In configuration error:', error);
+        }
+      }
       try {
         // 1. 온보딩 상태 확인
         if (isMounted) {
