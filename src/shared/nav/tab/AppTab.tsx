@@ -1,24 +1,62 @@
-import React from 'react';
-import {ArchiveStack} from '@/shared/nav/stack/ArchiveStack';
-import {MoreStack} from '@/shared/nav/stack/MoreStack';
-import {MapStack} from '@/shared/nav/stack/MapStack';
-import { useActiveTab } from '@stores/tabStore';
+import { Text } from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { MapStack } from '@nav/stack/MapStack';
+import { ArchiveStack } from '@nav/stack/ArchiveStack';
+import { MoreStack } from '@nav/stack/MoreStack';
 import { TAB_NAME } from '@constants/TAB_NAV_OPTIONS';
 
-export const AppTab = () => {
-  const activeTab = useActiveTab();
- 
-  // 현재 활성화된 탭에 따라 해당 스택을 렌더링
-  switch (activeTab) {
-    case TAB_NAME.MAP:
-      return <MapStack />;
-    case TAB_NAME.ARCHIVE:
-      return <ArchiveStack />;
-    case TAB_NAME.MORE:
-      return <MoreStack />;
-    default:
-      return <MapStack />; 
-  }
+export type AppTabParamList = {
+  [TAB_NAME.MAP]: undefined;
+  [TAB_NAME.ARCHIVE]: undefined;
+  [TAB_NAME.MORE]: undefined;
 };
 
+const Tab = createBottomTabNavigator<AppTabParamList>();
 
+export const AppTab = () => {
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: '#3b82f6',
+        tabBarInactiveTintColor: '#6b7280',
+        tabBarStyle: {
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 8,
+        },
+      }}
+    >
+      <Tab.Screen
+        name={TAB_NAME.MAP}
+        component={MapStack}
+        options={{
+          tabBarLabel: '지도',
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ color, fontSize: size }}>🗺️</Text>
+          ),
+        }}
+      />
+      <Tab.Screen
+        name={TAB_NAME.ARCHIVE}
+        component={ArchiveStack}
+        options={{
+          tabBarLabel: '아카이브',
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ color, fontSize: size }}>📦</Text>
+          ),
+        }}
+      />
+      <Tab.Screen
+        name={TAB_NAME.MORE}
+        component={MoreStack}
+        options={{
+          tabBarLabel: '더보기',
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ color, fontSize: size }}>⚙️</Text>
+          ),
+        }}
+      />
+    </Tab.Navigator>
+  );
+};
