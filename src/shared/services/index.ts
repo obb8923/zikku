@@ -1,6 +1,6 @@
 export * from './asyncStorageService';
-export * from './contactService';
-export * from './iapService';
+export * from './subjectStickerService';
 export { default as AsyncStorageService } from './asyncStorageService';
+
 
 
