@@ -14,6 +14,9 @@ if linkage != nil
   use_frameworks! :linkage => linkage.to_sym
 end
 
+require_relative '../node_modules/react-native/scripts/react_native_pods'
+require_relative '../node_modules/react-native-permissions/scripts/setup'
+
 target 'zikku' do
   config = use_native_modules!
 
@@ -22,7 +25,17 @@ target 'zikku' do
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
+  # 필요한 권한만 명시적으로 추가
+  setup_permissions([
+    'Camera',
+    'PhotoLibrary',
+    'LocationWhenInUse',
+    'Notification',
+  ])
+  # react-native-permissions 설정
+  permissions_path = '../node_modules/react-native-permissions/ios'
 
+  
   post_install do |installer|
     react_native_post_install(
       installer,
