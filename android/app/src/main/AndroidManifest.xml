@@ -3,6 +3,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- google map api -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
       android:name=".MainApplication"
@@ -13,6 +16,10 @@
       android:theme="@style/AppTheme"
       android:usesCleartextTraffic="${usesCleartextTraffic}"
       android:supportsRtl="true">
+      <!-- Google Maps API Key -->
+        <meta-data                                                    
+      android:name="com.google.android.geo.API_KEY" 
+      android:value="AIzaSyBh7F8euzV-C5vKT-dQaozna1kbHejq3AM"/>    
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"
