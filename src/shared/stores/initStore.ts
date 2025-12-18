@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Platform } from 'react-native';
 import { useOnboardingStore } from './onboardingStore';
 import { SUPABASE_WEB_CLIENT_KEY } from '@env';
+import { useTraceRecorder } from '@libs/hooks/useTraceRecorder';
 
 export const useAppInitialization = () => {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -61,6 +62,9 @@ export const useAppInitialization = () => {
       clearTimeout(timeoutId);
     };
   }, [checkOnboardingStatus]);
+
+  // traces 기록 & 동기화 훅 초기화
+  useTraceRecorder();
 
   return {
     isInitialized,

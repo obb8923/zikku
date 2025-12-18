@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Animated, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, StyleSheet, useWindowDimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MapStackParamList } from '@nav/stack/MapStack';
@@ -7,6 +7,10 @@ import { launchCamera, launchImageLibrary, ImagePickerResponse } from 'react-nat
 import { usePermissionStore } from '@stores/permissionStore';
 import MapView, { PROVIDER_DEFAULT, Region } from 'react-native-maps';
 import { useLocationStore } from '@stores/locationStore';
+import { useTracesStore } from '@stores/tracesStore';
+import { Canvas, Path, Skia, SkPath } from '@shopify/react-native-skia';
+import { latLngToScreenPoint } from '../componentes/traceProjection';
+import { useTraceRecorder } from '@libs/hooks/useTraceRecorder';
 
 type MapScreenNavigationProp = NativeStackNavigationProp<MapStackParamList, 'Map'>;
 
@@ -26,6 +30,12 @@ export const MapScreen = () => {
   const [isFabOpen, setIsFabOpen] = useState(false);
   const fabAnimation = useRef(new Animated.Value(0)).current;
   const mapRef = useRef<MapView>(null);
+  const regionRef = useRef<Region | null>(INITIAL_REGION);
+  const { width, height } = useWindowDimensions();
+
+  const traces = useTracesStore((s) => s.items);
+
+  useTraceRecorder();
 
   // 화면 진입 시 위치 권한 요청
   useEffect(() => {
@@ -133,6 +143,9 @@ export const MapScreen = () => {
         showsUserLocation={true}
         showsMyLocationButton={false}
         toolbarEnabled={false}
+        onRegionChangeComplete={(region) => {
+          regionRef.current = region;
+        }}
         onUserLocationChange={(event) => {
           const coordinate = event.nativeEvent.coordinate;
           if (!coordinate) {
@@ -156,6 +169,38 @@ export const MapScreen = () => {
           }
         }}
       />
+
+      {/* traces Skia 오버레이 */}
+      <View pointerEvents="none" style={StyleSheet.absoluteFillObject}>
+        <Canvas style={StyleSheet.absoluteFillObject}>
+          {regionRef.current && traces.length > 1 && (
+            <Path
+              path={(() => {
+                const region = regionRef.current as Region;
+                const first = traces[0];
+                const firstPoint = latLngToScreenPoint(
+                  first.latitude,
+                  first.longitude,
+                  region,
+                  width,
+                  height,
+                );
+                const skPath: SkPath = Skia.Path.Make();
+                skPath.moveTo(firstPoint.x, firstPoint.y);
+                for (let i = 1; i < traces.length; i++) {
+                  const t = traces[i];
+                  const p = latLngToScreenPoint(t.latitude, t.longitude, region, width, height);
+                  skPath.lineTo(p.x, p.y);
+                }
+                return skPath;
+              })()}
+              strokeWidth={3}
+              color="rgba(0, 150, 255, 0.8)"
+              style="stroke"
+            />
+          )}
+        </Canvas>
+      </View>
 
       {/* 갤러리 버튼 */}
       <Animated.View
