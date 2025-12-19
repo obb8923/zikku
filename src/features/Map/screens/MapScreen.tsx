@@ -223,16 +223,16 @@ export const MapScreen = () => {
       {/* <MapFAB /> */}
 
       {/* 지도 컨트롤용 리퀴드글래스 버튼들 */}
-      <View className="absolute gap-4" style={{right: 16, top: insets.top + 16}}>
-        <LiquidGlassButton onPress={handleZoomIn}>
+      <View className="absolute gap-2" style={{right: 16, top: insets.top + 16}}>
+        <LiquidGlassButton onPress={handleZoomIn} borderRadius={8}>
           <PlusSmall width={24} height={24} color="black" />
         </LiquidGlassButton>
 
-        <LiquidGlassButton onPress={handleZoomOut}>
+        <LiquidGlassButton onPress={handleZoomOut} borderRadius={8}>
           <MinusSmall width={24} height={24} color="black" />
         </LiquidGlassButton>
 
-        <LiquidGlassButton onPress={handleMoveToMyLocationWithFixedZoom}>
+        <LiquidGlassButton onPress={handleMoveToMyLocationWithFixedZoom} borderRadius={8}>
           <LocationUser width={24} height={24} color="black" />
         </LiquidGlassButton>
       </View>
