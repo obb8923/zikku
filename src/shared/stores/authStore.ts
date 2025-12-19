@@ -60,15 +60,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoggedIn: false,
         userId: null,
       });
-      // traces 스토어 리셋
-      try {
-        const { useTracesStore } = await import('./tracesStore');
-        await useTracesStore.getState().reset();
-      } catch (error) {
-        if (__DEV__) {
-          console.error('[AuthStore] tracesStore reset 실패', error);
-        }
-      }
     } catch (error) {
       console.error('Error logging out:', error);
       set({ 
