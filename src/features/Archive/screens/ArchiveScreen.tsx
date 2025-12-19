@@ -10,16 +10,19 @@ export const ArchiveScreen = () => {
 
   return (
     <Background type="white" isStatusBarGap>
-      <View className="flex-1 px-6 py-8">
-        <View className="absolute top-12 left-4 z-10">
-          <LiquidGlassButton
+      <View className="flex-1">
+      <View className="absolute top-0 left-4">
+      <LiquidGlassButton
             onPress={() => navigation.goBack()}
             size="medium"
           >
             <ChevronLeft width={20} height={20} color="black" />
           </LiquidGlassButton>
-        </View>
+          </View>
+      <View className="flex-1 px-6 py-8">
+       
         <Text type="title1" text="아카이브" />
+      </View>
       </View>
     </Background>
   );

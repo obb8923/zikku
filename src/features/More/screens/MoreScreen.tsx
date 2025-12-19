@@ -6,7 +6,7 @@ import { Background } from '@components/Background';
 import { Text } from '@components/Text';
 import { LiquidGlassButton } from '@components/LiquidGlassButton';
 import ChevronLeft from '@assets/svgs/ChevronLeft.svg';
-
+import {AuthButton} from '@/features/Auth/components/AuthButton';
 type MoreScreenNavigationProp = NativeStackNavigationProp<MoreStackParamList, 'More'>;
 
 export const MoreScreen = () => {
@@ -18,24 +18,19 @@ export const MoreScreen = () => {
 
   return (
     <Background type="white" isStatusBarGap>
-      <View className="flex-1 px-6 py-8">
-        <View className="absolute top-12 left-4 z-10">
-          <LiquidGlassButton
+        <View className="flex-1">
+      <View className="absolute top-0 left-4">
+      <LiquidGlassButton
             onPress={() => navigation.goBack()}
             size="medium"
           >
             <ChevronLeft width={20} height={20} color="black" />
           </LiquidGlassButton>
-        </View>
-        <Text type="title1" text="설정" className="mb-8" />
-        
-        <TouchableOpacity
-          onPress={handleLoginPress}
-          className="bg-blue-500 rounded-lg py-4 px-6 items-center"
-          activeOpacity={0.8}
-        >
-          <Text type="body1" text="로그인" className="text-white" />
-        </TouchableOpacity>
+          </View>
+      <View className="flex-1 px-6 py-8">
+        <AuthButton onPress={handleLoginPress} />
+        <Text type="title1" text="더보기" />
+      </View>
       </View>
     </Background>
   );

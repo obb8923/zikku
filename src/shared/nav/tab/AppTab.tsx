@@ -1,10 +1,11 @@
-import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { View, TouchableOpacity, Animated } from 'react-native';
 import {
   createBottomTabNavigator,
   TransitionPresets,
   type BottomTabBarProps,
 } from '@react-navigation/bottom-tabs';
+import { CommonActions, useNavigation } from '@react-navigation/native';
 import { MapStack } from '@nav/stack/MapStack';
 import { ArchiveStack } from '@nav/stack/ArchiveStack';
 import { MoreStack } from '@nav/stack/MoreStack';
@@ -14,8 +15,12 @@ import ArchiveIcon from '@assets/svgs/Archive.svg';
 import MoreIcon from '@assets/svgs/More.svg';
 import { LiquidGlassButton } from '@components/LiquidGlassButton';
 import PlusSmall from '@assets/svgs/PlusSmall.svg';
+import CameraIcon from '@assets/svgs/Camera.svg';
+import ImageIcon from '@assets/svgs/Image.svg';
 import {LiquidGlassView} from '@components/LiquidGlassView';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { launchCamera, launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
+import { usePermissionStore } from '@stores/permissionStore';
 export type AppTabParamList = {
   [TAB_NAME.MAP]: undefined;
   [TAB_NAME.ARCHIVE]: undefined;
@@ -35,6 +40,111 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
       route.name === TAB_NAME.ARCHIVE || route.name === TAB_NAME.MORE,
   );
   const insets = useSafeAreaInsets();
+  const ensureCameraAndPhotos = usePermissionStore((s) => s.ensureCameraAndPhotos);
+  const rootNavigation = useNavigation();
+
+  const [isFabOpen, setIsFabOpen] = useState(false);
+  const fabAnimation = useRef(new Animated.Value(0)).current;
+
+  const { cameraButtonTranslateY, galleryButtonTranslateY, buttonScale } = useMemo(() => {
+    const cameraButtonTranslateY = fabAnimation.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, -40],
+    });
+    const galleryButtonTranslateY = fabAnimation.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, -100],
+    });
+    const buttonScale = fabAnimation.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.8, 1],
+    });
+
+    return { cameraButtonTranslateY, galleryButtonTranslateY, buttonScale };
+  }, [fabAnimation]);
+
+  const openFab = useCallback(async () => {
+    const granted = await ensureCameraAndPhotos();
+    if (!granted) return;
+
+    setIsFabOpen(true);
+    Animated.spring(fabAnimation, {
+      toValue: 1,
+      useNativeDriver: true,
+      friction: 6,
+      tension: 40,
+    }).start();
+  }, [ensureCameraAndPhotos, fabAnimation]);
+
+  const closeFab = useCallback(() => {
+    setIsFabOpen(false);
+    Animated.spring(fabAnimation, {
+      toValue: 0,
+      useNativeDriver: true,
+      friction: 6,
+      tension: 40,
+    }).start();
+  }, [fabAnimation]);
+
+  const handleImagePicked = useCallback(
+    (response: ImagePickerResponse) => {
+      if (response.didCancel || !response.assets || response.assets.length === 0) {
+        return;
+      }
+
+      const asset = response.assets[0];
+      if (!asset.uri) {
+        return;
+      }
+
+      const image = {
+        uri: asset.uri,
+        fileName: asset.fileName,
+        type: asset.type,
+      };
+
+      // Map 탭으로 이동한 후 RecordCreate 화면으로 네비게이션
+      rootNavigation.dispatch(
+        CommonActions.navigate({
+          name: TAB_NAME.MAP,
+          params: {
+            screen: 'RecordCreate',
+            params: { image },
+          },
+        }),
+      );
+    },
+    [rootNavigation],
+  );
+
+  const handleSelectFromGallery = useCallback(() => {
+    closeFab();
+    launchImageLibrary(
+      {
+        mediaType: 'photo',
+        selectionLimit: 1,
+      },
+      handleImagePicked,
+    );
+  }, [closeFab, handleImagePicked]);
+
+  const handleTakePhoto = useCallback(async () => {
+    closeFab();
+    launchCamera(
+      {
+        mediaType: 'photo',
+      },
+      handleImagePicked,
+    );
+  }, [closeFab, handleImagePicked]);
+
+  const handlePressMainFab = useCallback(() => {
+    if (isFabOpen) {
+      closeFab();
+    } else {
+      void openFab();
+    }
+  }, [isFabOpen, openFab, closeFab]);
   return (
     <View 
     style={{
@@ -99,15 +209,65 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
           );
         })}
       </LiquidGlassView>
-      {/* 오른쪽: FAB (리퀴드글래스 버튼) */}
-      <LiquidGlassButton
-        onPress={() => {
-          navigation.navigate(TAB_NAME.MAP);
+      {/* 갤러리 버튼 */}
+      <Animated.View
+        pointerEvents={isFabOpen ? 'auto' : 'none'}
+        style={{
+          position: 'absolute',
+          bottom: insets.bottom + 10,
+          right: 16,
+          transform: [
+            { translateY: galleryButtonTranslateY },
+            { scale: buttonScale },
+          ],
+          opacity: fabAnimation,
         }}
-        size="large"
       >
-        <PlusSmall width={24} height={24} color="black" />
-      </LiquidGlassButton>
+        <LiquidGlassButton onPress={handleSelectFromGallery} size="large">
+          <ImageIcon width={24} height={24} color="black" />
+        </LiquidGlassButton>
+      </Animated.View>
+
+      {/* 카메라 버튼 */}
+      <Animated.View
+        pointerEvents={isFabOpen ? 'auto' : 'none'}
+        style={{
+          position: 'absolute',
+          bottom: insets.bottom + 10,
+          right: 16,
+          transform: [
+            { translateY: cameraButtonTranslateY },
+            { scale: buttonScale },
+          ],
+          opacity: fabAnimation,
+        }}
+      >
+        <LiquidGlassButton onPress={handleTakePhoto} size="large">
+          <CameraIcon width={24} height={24} color="black" />
+        </LiquidGlassButton>
+      </Animated.View>
+
+      {/* 메인 FAB - 리퀴드글래스 버튼 */}
+      <Animated.View
+        style={{
+          opacity: isFabOpen ? 0.8 : 1,
+          transform: [
+            {
+              rotate: fabAnimation.interpolate({
+                inputRange: [0, 1],
+                outputRange: ['0deg', '45deg'],
+              }) as any,
+            },
+          ],
+        }}
+      >
+        <LiquidGlassButton
+          onPress={handlePressMainFab}
+          size="large"
+        >
+          <PlusSmall width={24} height={24} color="black" />
+        </LiquidGlassButton>
+      </Animated.View>
     </View>
   );
 };
@@ -123,29 +283,10 @@ export const AppTab = () => {
           backgroundColor: 'transparent',
           borderTopWidth: 0,
           elevation: 0,
+          overflow: 'visible',
         },
         animationEnabled: true,
         ...TransitionPresets.ShiftTransition,
-        sceneStyleInterpolator: ({ current }) => ({
-          sceneStyle: {
-            opacity: current.progress.interpolate({
-              inputRange: [-1, 0, 1],
-              outputRange: [0.7, 1, 1],   // 흐림 강도 살짝 증가
-              extrapolate: 'clamp',
-            }),
-        
-            transform: [
-              {
-                translateX: current.progress.interpolate({
-                  inputRange: [-1, 0, 1],
-                  outputRange: [60, 0, -60],   // 이동 거리 축소 → 쫀쫀함 핵심
-                  extrapolate: 'clamp',
-                }),
-              }
-            ],
-          },
-        })
-        
       }}
       tabBar={(props) => <CustomTabBar {...props} />}
     >
