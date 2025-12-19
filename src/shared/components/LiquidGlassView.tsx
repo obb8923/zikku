@@ -13,6 +13,7 @@ export type AppLiquidGlassViewProps = PropsWithChildren<
     className?: string;
     style?: StyleProp<ViewStyle>;
     borderRadius?: number;
+    innerStyle?: StyleProp<ViewStyle>;
   }
 >;
 export const LiquidGlassView = ({
@@ -24,6 +25,7 @@ export const LiquidGlassView = ({
   effect = 'clear',
   colorScheme = 'system',
   tintColor = 'rgba(255,255,255,0.22)',
+  innerStyle,
   ...rest
 }: AppLiquidGlassViewProps) => {
   const commonInnerStyle: ViewStyle = {
@@ -62,7 +64,7 @@ export const LiquidGlassView = ({
         effect={effect}
         colorScheme={colorScheme}
         tintColor={tintColor}
-        style={[commonInnerStyle, (rest as LiquidGlassViewProps).style]}
+        style={[commonInnerStyle, innerStyle, (rest as LiquidGlassViewProps).style]}
       >
         {children}
       </RNLiquidGlassView>

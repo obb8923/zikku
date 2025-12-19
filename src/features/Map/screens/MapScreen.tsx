@@ -8,7 +8,7 @@ import { MapFAB } from '../componentes/MapFAB';
 import { LiquidGlassButton } from '@components/LiquidGlassButton';
 import PlusSmall from '@assets/svgs/PlusSmall.svg';
 import MinusSmall from '@assets/svgs/MinusSmall.svg';
-import Mark from '@assets/svgs/Mark.svg';
+import LocationUser from '@assets/svgs/LocationUser.svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const INITIAL_REGION: Region = {
   latitude: 37.5665,
@@ -220,7 +220,7 @@ export const MapScreen = () => {
         )}
       </MapView>
       {/* FAB 버튼 */}
-      <MapFAB />
+      {/* <MapFAB /> */}
 
       {/* 지도 컨트롤용 리퀴드글래스 버튼들 */}
       <View className="absolute gap-4" style={{right: 16, top: insets.top + 16}}>
@@ -233,7 +233,7 @@ export const MapScreen = () => {
         </LiquidGlassButton>
 
         <LiquidGlassButton onPress={handleMoveToMyLocationWithFixedZoom}>
-          <Mark width={24} height={24} color="black" />
+          <LocationUser width={24} height={24} color="black" />
         </LiquidGlassButton>
       </View>
 
