@@ -123,12 +123,16 @@ class SubjectStickerExtractor: NSObject {
 
         // CVPixelBuffer를 CIImage로 변환
         let maskedImage = CIImage(cvPixelBuffer: maskedPixelBuffer)
+        
+        // TODO: 외곽선 기능은 추후 구현
+        // 일단 원본 이미지만 사용
+        let imageWithOutline = maskedImage
 
         let context = CIContext()
 
         guard let cgImage = context.createCGImage(
-          maskedImage,
-          from: maskedImage.extent
+          imageWithOutline,
+          from: imageWithOutline.extent
         ) else {
           DispatchQueue.main.async {
             reject(
@@ -140,7 +144,7 @@ class SubjectStickerExtractor: NSObject {
           return
         }
 
-        // 원본 이미지의 scale 정보를 가져오기 위해 UIImage 로드
+        // 원본 이미지의 scale 및 orientation 정보를 가져오기 위해 UIImage 로드
         guard let originalImage = self.loadImage(from: imagePath) else {
           DispatchQueue.main.async {
             reject(
@@ -152,10 +156,11 @@ class SubjectStickerExtractor: NSObject {
           return
         }
 
+        // 원본 이미지의 방향 정보를 유지
         let resultImage = UIImage(
           cgImage: cgImage,
           scale: originalImage.scale,
-          orientation: .up
+          orientation: originalImage.imageOrientation
         )
 
         guard let data = resultImage.pngData() else {
@@ -239,6 +244,63 @@ class SubjectStickerExtractor: NSObject {
     }
     
     return ciImage
+  }
+  
+  // MARK: - 외곽선 추가
+  
+  /// 이미지에 흰색 외곽선을 추가합니다
+  private func addWhiteOutline(to image: CIImage, mask: CIImage) -> CIImage {
+    // 외곽선 두께 (픽셀 단위)
+    let outlineWidth: CGFloat = 2.0
+    
+    // 1. 마스크를 그레이스케일로 변환 (알파 채널로 사용)
+    let grayMask = mask.applyingFilter("CIColorMatrix", parameters: [
+      "inputRVector": CIVector(x: 0, y: 0, z: 0, w: 0.2126),
+      "inputGVector": CIVector(x: 0, y: 0, z: 0, w: 0.7152),
+      "inputBVector": CIVector(x: 0, y: 0, z: 0, w: 0.0722),
+      "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1),
+      "inputBiasVector": CIVector(x: 0, y: 0, z: 0, w: 0)
+    ])
+    
+    // 2. Morphology 필터로 마스크 확장 (경계 감지)
+    guard let morphFilter = CIFilter(name: "CIMorphologyMaximum") else {
+      return image
+    }
+    morphFilter.setValue(grayMask, forKey: kCIInputImageKey)
+    morphFilter.setValue(outlineWidth, forKey: kCIInputRadiusKey)
+    
+    guard let expandedMask = morphFilter.outputImage else {
+      return image
+    }
+    
+    // 3. 확장된 마스크에서 원본 마스크를 빼서 경계만 추출
+    guard let subtractFilter = CIFilter(name: "CIDifferenceBlendMode") else {
+      return image
+    }
+    subtractFilter.setValue(expandedMask, forKey: kCIInputImageKey)
+    subtractFilter.setValue(grayMask, forKey: kCIInputBackgroundImageKey)
+    
+    guard let outlineMask = subtractFilter.outputImage else {
+      return image
+    }
+    
+    // 4. 경계를 흰색으로 칠하기
+    let whiteOutline = outlineMask.applyingFilter("CIColorMatrix", parameters: [
+      "inputRVector": CIVector(x: 0, y: 0, z: 0, w: 1),
+      "inputGVector": CIVector(x: 0, y: 0, z: 0, w: 1),
+      "inputBVector": CIVector(x: 0, y: 0, z: 0, w: 1),
+      "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1),
+      "inputBiasVector": CIVector(x: 0, y: 0, z: 0, w: 0)
+    ])
+    
+    // 5. 원본 이미지와 흰색 외곽선 합성
+    guard let compositeFilter = CIFilter(name: "CISourceOverCompositing") else {
+      return image
+    }
+    compositeFilter.setValue(whiteOutline, forKey: kCIInputImageKey)
+    compositeFilter.setValue(image, forKey: kCIInputBackgroundImageKey)
+    
+    return compositeFilter.outputImage ?? image
   }
 }
 
