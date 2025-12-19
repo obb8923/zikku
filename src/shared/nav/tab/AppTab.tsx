@@ -21,6 +21,7 @@ import {LiquidGlassView} from '@components/LiquidGlassView';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import { launchCamera, launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
 import { usePermissionStore } from '@stores/permissionStore';
+import { RecordModal } from '@components/RecordModal';
 export type AppTabParamList = {
   [TAB_NAME.MAP]: undefined;
   [TAB_NAME.ARCHIVE]: undefined;
@@ -44,6 +45,12 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
   const rootNavigation = useNavigation();
 
   const [isFabOpen, setIsFabOpen] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<{
+    uri: string;
+    fileName?: string;
+    type?: string;
+  } | null>(null);
   const fabAnimation = useRef(new Animated.Value(0)).current;
 
   const { cameraButtonTranslateY, galleryButtonTranslateY, buttonScale } = useMemo(() => {
@@ -89,11 +96,15 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
   const handleImagePicked = useCallback(
     (response: ImagePickerResponse) => {
       if (response.didCancel || !response.assets || response.assets.length === 0) {
+        setIsModalVisible(false);
+        setSelectedImage(null);
         return;
       }
 
       const asset = response.assets[0];
       if (!asset.uri) {
+        setIsModalVisible(false);
+        setSelectedImage(null);
         return;
       }
 
@@ -103,18 +114,10 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
         type: asset.type,
       };
 
-      // Map 탭으로 이동한 후 RecordCreate 화면으로 네비게이션
-      rootNavigation.dispatch(
-        CommonActions.navigate({
-          name: TAB_NAME.MAP,
-          params: {
-            screen: 'RecordCreate',
-            params: { image },
-          },
-        }),
-      );
+      setSelectedImage(image);
+      setIsModalVisible(true);
     },
-    [rootNavigation],
+    [],
   );
 
   const handleSelectFromGallery = useCallback(() => {
@@ -268,6 +271,16 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
           <PlusSmall width={24} height={24} color="black" />
         </LiquidGlassButton>
       </Animated.View>
+
+      {/* 기록 모달 */}
+      <RecordModal
+        visible={isModalVisible}
+        onClose={() => {
+          setIsModalVisible(false);
+          setSelectedImage(null);
+        }}
+        image={selectedImage}
+      />
     </View>
   );
 };

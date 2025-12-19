@@ -14,6 +14,8 @@
 		A58F7FD6CD363A2D9D9BBF41 /* libPods-zikku.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A56A7ADCEE9BDDA6379A42D /* libPods-zikku.a */; };
 		CE33ED2A2EF2D14E00FDC13B /* AppleSignInModule.m in Sources */ = {isa = PBXBuildFile; fileRef = CE33ED292EF2D14500FDC13B /* AppleSignInModule.m */; };
 		CE33ED2C2EF2D16A00FDC13B /* AppleSignInModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE33ED2B2EF2D16600FDC13B /* AppleSignInModule.swift */; };
+		CE33ED3B2EF5D3EB00FDC13B /* SubjectStickerExtractor.m in Sources */ = {isa = PBXBuildFile; fileRef = CE33ED3A2EF5D3EB00FDC13B /* SubjectStickerExtractor.m */; };
+		CE33ED3D2EF5D3F700FDC13B /* SubjectStickerExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE33ED3C2EF5D3F700FDC13B /* SubjectStickerExtractor.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +30,9 @@
 		CE33ED282EF2D12A00FDC13B /* zikku.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = zikku.entitlements; path = zikku/zikku.entitlements; sourceTree = "<group>"; };
 		CE33ED292EF2D14500FDC13B /* AppleSignInModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppleSignInModule.m; sourceTree = "<group>"; };
 		CE33ED2B2EF2D16600FDC13B /* AppleSignInModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInModule.swift; sourceTree = "<group>"; };
+		CE33ED3A2EF5D3EB00FDC13B /* SubjectStickerExtractor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = SubjectStickerExtractor.m; path = zikku/SubjectStickerExtractor.m; sourceTree = "<group>"; };
+		CE33ED3C2EF5D3F700FDC13B /* SubjectStickerExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SubjectStickerExtractor.swift; path = zikku/SubjectStickerExtractor.swift; sourceTree = "<group>"; };
+		CE33ED3E2EF5D40700FDC13B /* zikku-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "zikku-Bridging-Header.h"; path = "zikku/zikku-Bridging-Header.h"; sourceTree = "<group>"; };
 		DE9148CE4BCA23D82FE6E4D9 /* Pods-zikku.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-zikku.release.xcconfig"; path = "Target Support Files/Pods-zikku/Pods-zikku.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -47,6 +52,9 @@
 		13B07FAE1A68108700A75B9A /* zikku */ = {
 			isa = PBXGroup;
 			children = (
+				CE33ED3E2EF5D40700FDC13B /* zikku-Bridging-Header.h */,
+				CE33ED3C2EF5D3F700FDC13B /* SubjectStickerExtractor.swift */,
+				CE33ED3A2EF5D3EB00FDC13B /* SubjectStickerExtractor.m */,
 				CE33ED2B2EF2D16600FDC13B /* AppleSignInModule.swift */,
 				CE33ED292EF2D14500FDC13B /* AppleSignInModule.m */,
 				CE33ED282EF2D12A00FDC13B /* zikku.entitlements */,
@@ -199,9 +207,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-zikku/Pods-zikku-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-zikku/Pods-zikku-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -238,9 +250,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-zikku/Pods-zikku-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-zikku/Pods-zikku-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -255,6 +271,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
+				CE33ED3D2EF5D3F700FDC13B /* SubjectStickerExtractor.swift in Sources */,
+				CE33ED3B2EF5D3EB00FDC13B /* SubjectStickerExtractor.m in Sources */,
 				CE33ED2C2EF2D16A00FDC13B /* AppleSignInModule.swift in Sources */,
 				CE33ED2A2EF2D14E00FDC13B /* AppleSignInModule.m in Sources */,
 			);
@@ -274,7 +292,7 @@
 				DEVELOPMENT_TEAM = K56RYM74A7;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = zikku/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -304,7 +322,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = K56RYM74A7;
 				INFOPLIST_FILE = zikku/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -372,7 +390,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
@@ -442,7 +460,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
