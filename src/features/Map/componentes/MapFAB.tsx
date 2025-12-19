@@ -5,7 +5,10 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MapStackParamList } from '@nav/stack/MapStack';
 import { launchCamera, launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
 import { usePermissionStore } from '@stores/permissionStore';
-
+import { LiquidGlassButton } from '@components/LiquidGlassButton';
+import CameraIcon from '@assets/svgs/Camera.svg';
+import ImageIcon from '@assets/svgs/Image.svg';
+import PlusSmall from '@assets/svgs/PlusSmall.svg';
 type MapScreenNavigationProp = NativeStackNavigationProp<MapStackParamList, 'Map'>;
 
 export const MapFAB = () => {
@@ -122,14 +125,9 @@ export const MapFAB = () => {
           opacity: fabAnimation,
         }}
       >
-        <TouchableOpacity
-          activeOpacity={0.8}
-          className="rounded-full bg-white px-5 py-3 flex-row items-center shadow-lg"
-          onPress={handleSelectFromGallery}
-        >
-          <Text className="mr-2 text-base text-blue-500">📂</Text>
-          <Text className="text-base font-medium text-blue-500">앨범에서 선택</Text>
-        </TouchableOpacity>
+        <LiquidGlassButton onPress={handleSelectFromGallery} size="large">
+          <ImageIcon width={24} height={24} color="black" />
+        </LiquidGlassButton>
       </Animated.View>
 
       {/* 카메라 버튼 */}
@@ -146,39 +144,32 @@ export const MapFAB = () => {
           opacity: fabAnimation,
         }}
       >
-        <TouchableOpacity
-          activeOpacity={0.8}
-          className="rounded-full bg-white px-5 py-3 flex-row items-center shadow-lg"
-          onPress={handleTakePhoto}
-        >
-          <Text className="mr-2 text-base text-blue-500">📷</Text>
-          <Text className="text-base font-medium text-blue-500">사진 촬영</Text>
-        </TouchableOpacity>
+        <LiquidGlassButton onPress={handleTakePhoto} size="large">
+          <CameraIcon width={24} height={24} color="black" />
+        </LiquidGlassButton>
       </Animated.View>
 
-      {/* 메인 FAB */}
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={handlePressMainFab}
-        className="absolute bottom-6 right-6 h-14 w-14 items-center justify-center rounded-full bg-blue-500 shadow-lg"
-        style={{ opacity: isFabOpen ? 0.8 : 1 }}
+      {/* 메인 FAB - 리퀴드글래스 버튼 */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          bottom: 24,
+          right: 24,
+          opacity: isFabOpen ? 0.8 : 1,
+          transform: [
+            {
+              rotate: fabAnimation.interpolate({
+                inputRange: [0, 1],
+                outputRange: ['0deg', '45deg'],
+              }) as any,
+            },
+          ],
+        }}
       >
-        <Animated.Text
-          className="text-3xl font-bold text-white"
-          style={{
-            transform: [
-              {
-                rotate: fabAnimation.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ['0deg', '45deg'],
-                }),
-              },
-            ],
-          }}
-        >
-          +
-        </Animated.Text>
-      </TouchableOpacity>
+        <LiquidGlassButton onPress={handlePressMainFab} size="large">
+          <PlusSmall width={36} height={36} color="black" />
+        </LiquidGlassButton>
+      </Animated.View>
     </>
   );
 };

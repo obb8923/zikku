@@ -1,5 +1,7 @@
 import React, { ReactNode } from 'react';
-import { GestureResponderEvent, StyleProp, TouchableOpacity, ViewStyle, Text } from 'react-native';
+import { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
+import { LiquidGlassButton } from './LiquidGlassButton';
+import { Text } from './Text';
 
 type FloatingActionButtonProps = {
   onPress: (event: GestureResponderEvent) => void;
@@ -15,14 +17,24 @@ export const FloatingActionButton = ({
   label = '+',
 }: FloatingActionButtonProps) => {
   return (
-    <TouchableOpacity
-      activeOpacity={0.8}
+    <LiquidGlassButton
       onPress={onPress}
-      className="absolute bottom-6 right-6 h-14 w-14 items-center justify-center rounded-full bg-blue-500 shadow-lg"
-      style={style}
+      borderRadius={999}
+      className="absolute bottom-6 right-6 items-center justify-center"
+      containerStyle={[
+        {
+          width: 56,
+          height: 56,
+        },
+        style,
+      ]}
     >
-      {icon ? icon : <Text className="text-2xl text-white">{label}</Text>}
-    </TouchableOpacity>
+      {icon ? (
+        icon
+      ) : (
+        <Text text={label} className="text-2xl text-white" />
+      )}
+    </LiquidGlassButton>
   );
 };
 

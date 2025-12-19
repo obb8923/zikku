@@ -16,6 +16,7 @@ module.exports = {
         '@stores': './src/shared/stores',
         '@shared-types': './src/shared/types',
         '@services': './src/shared/services',
+        '@utils': './src/shared/utils',
         '@i18n': './src/shared/i18n',
       },
     }],
