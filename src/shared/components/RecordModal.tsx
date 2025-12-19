@@ -35,27 +35,22 @@ export const RecordModal = ({ visible, onClose, image }: RecordModalProps) => {
 
   const handleExtractSubjects = async () => {
     if (!image?.uri) {
-      console.log('[RecordModal] 스티커 추출 시작: 이미지 URI가 없습니다.');
       return;
     }
 
-    console.log('[RecordModal] 스티커 추출 시작:', { imageUri: image.uri });
     setIsLoading(true);
     setExtractionFailed(false);
 
     try {
-      console.log('[RecordModal] 지원 여부 확인 중...');
       const isSupported = await SubjectStickerService.isSupported();
       console.log('[RecordModal] 지원 여부:', isSupported);
 
       if (!isSupported) {
-        console.log('[RecordModal] 스티커 추출이 지원되지 않습니다.');
         setExtractionFailed(true);
         setStickers([]);
         return;
       }
 
-      console.log('[RecordModal] 이미지 분석 시작:', image.uri);
       const results = await SubjectStickerService.analyzeImage(image.uri);
       console.log('[RecordModal] 분석 결과:', {
         count: results.length,
@@ -69,21 +64,17 @@ export const RecordModal = ({ visible, onClose, image }: RecordModalProps) => {
       });
 
       if (results.length > 0) {
-        console.log('[RecordModal] 스티커 추출 성공:', results.length, '개');
         setStickers(results);
         setExtractionFailed(false);
       } else {
-        console.log('[RecordModal] 스티커 추출 실패: 결과가 없습니다.');
         setExtractionFailed(true);
         setStickers([]);
       }
     } catch (e) {
-      console.error('[RecordModal] 스티커 추출 에러:', e);
       setExtractionFailed(true);
       setStickers([]);
     } finally {
       setIsLoading(false);
-      console.log('[RecordModal] 스티커 추출 완료');
     }
   };
 
@@ -95,7 +86,7 @@ export const RecordModal = ({ visible, onClose, image }: RecordModalProps) => {
   const imageUri = stickers.length > 0 && !isLoading ? stickers[0].uri : image?.uri;
   
   const ImageSticker = imageUri ? (
-    <View style={{ width: 300, height: 300, backgroundColor: '#000000' }}>
+    <View style={{ width: 300, height: 300}}>
       {isLoading && (
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color="#FFFFFF" />
