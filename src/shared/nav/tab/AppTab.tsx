@@ -121,7 +121,6 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
   );
 
   const handleSelectFromGallery = useCallback(() => {
-    closeFab();
     launchImageLibrary(
       {
         mediaType: 'photo',
@@ -129,16 +128,19 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
       },
       handleImagePicked,
     );
+    // 이미지 선택기를 먼저 열고, FAB는 백그라운드에서 닫기
+    setTimeout(() => closeFab(), 0);
   }, [closeFab, handleImagePicked]);
 
   const handleTakePhoto = useCallback(async () => {
-    closeFab();
     launchCamera(
       {
         mediaType: 'photo',
       },
       handleImagePicked,
     );
+    // 카메라를 먼저 열고, FAB는 백그라운드에서 닫기
+    setTimeout(() => closeFab(), 0);
   }, [closeFab, handleImagePicked]);
 
   const handlePressMainFab = useCallback(() => {
