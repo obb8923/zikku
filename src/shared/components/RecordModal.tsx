@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, Image, ScrollView, ActivityIndicator, Text, InteractionManager } from 'react-native';
+import { View, TouchableOpacity, Image, ScrollView, ActivityIndicator, Text } from 'react-native';
 import { Portal } from '@gorhom/portal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SubjectStickerService, type StickerResult } from '@shared/services';
@@ -24,13 +24,13 @@ export const RecordModal = ({ visible, onClose, image }: RecordModalProps) => {
 
   useEffect(() => {
     if (visible && image?.uri) {
-      // UI가 먼저 렌더링되도록 무거운 작업을 지연
-      const interactionHandle = InteractionManager.runAfterInteractions(() => {
+      // UI가 먼저 렌더링되도록 무거운 작업을 다음 프레임으로 지연
+      const timeoutId = setTimeout(() => {
         handleExtractSubjects();
-      });
+      }, 0);
       
       return () => {
-        interactionHandle.cancel();
+        clearTimeout(timeoutId);
       };
     } else {
       // 모달이 닫히면 상태 초기화
