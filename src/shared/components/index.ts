@@ -4,7 +4,9 @@ import { FloatingActionButton } from "./FloatingActionButton";
 import { LiquidGlassView } from "./LiquidGlassView";
 import { LiquidGlassButton } from "./LiquidGlassButton";
 import { RecordModal } from "./RecordModal";
-import { ImageOutline } from "./ImageOutline";
+import { BackButton } from "./BackButton";
+import { Chip } from "./Chip";
+import { Note } from "./Note";
 
 export {
   Background,
@@ -13,5 +15,7 @@ export {
   LiquidGlassView,
   LiquidGlassButton,
   RecordModal,
-  ImageOutline,
+  BackButton,
+  Chip,
+  Note,
 };

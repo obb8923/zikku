@@ -6,9 +6,8 @@ import type { MoreStackParamList } from '@nav/stack/MoreStack';
 import type { AppTabParamList } from '@nav/tab/AppTab';
 import { Background } from '@components/Background';
 import { Text } from '@components/Text';
-import { LiquidGlassButton } from '@components/LiquidGlassButton';
+import { BackButton } from '@components/BackButton';
 import { LiquidGlassView } from '@components/LiquidGlassView';
-import ChevronLeft from '@assets/svgs/ChevronLeft.svg';
 import {AuthButton} from '@/features/More/componentes/AuthButton';
 import {BUTTON_SIZE_MEDIUM} from '@/shared/constants/NORMAL';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -41,15 +40,10 @@ export const MoreScreen = () => {
   return (
     <Background type="white" isStatusBarGap>
         <View className="flex-1">
-      <View className="absolute top-0 left-4 z-10" style={{zIndex: 10}}>
-      <LiquidGlassButton onPress={handleBackPress}>
-            <ChevronLeft width={24} height={24} color="black" />
-      </LiquidGlassButton>
-      </View>
+      <BackButton onPress={handleBackPress} />
       <ScrollView 
       className="flex-1 px-8"
       contentContainerStyle={{paddingTop:BUTTON_SIZE_MEDIUM+24,paddingBottom:insets.bottom+24}}
-      pointerEvents="box-none"
       >
         {/* Auth Section */}
         {!isLoggedIn && (
