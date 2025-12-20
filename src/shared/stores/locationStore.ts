@@ -8,8 +8,14 @@ interface LocationState {
   longitude: number | null;
   error: string | null;
   isLoading: boolean;
+  watchId: number | null;
+  isFollowingUser: boolean; // 지도가 사용자 위치를 따라가는지 여부
   fetchLocation: () => void;
+  startWatchingLocation: () => void;
+  stopWatchingLocation: () => void;
   setLocation: (latitude: number, longitude: number) => void;
+  setFollowUser: (follow: boolean) => void;
+  toggleFollowUser: () => void;
 }
 
 export const useLocationStore = create<LocationState>((set, get) => ({
@@ -17,6 +23,8 @@ export const useLocationStore = create<LocationState>((set, get) => ({
   longitude: null,
   error: null,
   isLoading: false,
+  watchId: null,
+  isFollowingUser: true, // 기본값은 true
   fetchLocation: async () => {
     set({ isLoading: true, error: null });
     const permission = Platform.OS === 'ios' ? PERMISSIONS.IOS.LOCATION_WHEN_IN_USE : PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION;
@@ -50,5 +58,59 @@ export const useLocationStore = create<LocationState>((set, get) => ({
   },
   setLocation: (latitude: number, longitude: number) => {
     set({ latitude, longitude });
+  },
+  startWatchingLocation: async () => {
+    const { watchId } = get();
+    // 이미 watching 중이면 중복 시작하지 않음
+    if (watchId !== null) {
+      return;
+    }
+
+    const permission = Platform.OS === 'ios' ? PERMISSIONS.IOS.LOCATION_WHEN_IN_USE : PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION;
+    
+    try {
+      const permissionStatus = await request(permission);
+
+      if (permissionStatus !== RESULTS.GRANTED) {
+        set({ error: `Location permission not granted. Status: ${permissionStatus}` });
+        return;
+      }
+
+      const id = Geolocation.watchPosition(
+        (position) => {
+          set({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            error: null,
+          });
+        },
+        (error) => {
+          set({ error: `Geolocation error: ${error.code} - ${error.message}` });
+        },
+        { 
+          enableHighAccuracy: true, 
+          timeout: 5000, 
+          maximumAge: 1000, // 1초 이내의 위치만 사용
+          distanceFilter: 1, // 1m 이상 이동했을 때만 업데이트
+        }
+      );
+
+      set({ watchId: id });
+    } catch (err: any) {
+      set({ error: `Failed to start watching location: ${err.message}` });
+    }
+  },
+  stopWatchingLocation: () => {
+    const { watchId } = get();
+    if (watchId !== null) {
+      Geolocation.clearWatch(watchId);
+      set({ watchId: null });
+    }
+  },
+  setFollowUser: (follow: boolean) => {
+    set({ isFollowingUser: follow });
+  },
+  toggleFollowUser: () => {
+    set((state) => ({ isFollowingUser: !state.isFollowingUser }));
   },
 })); 

@@ -29,13 +29,21 @@ interface TraceState {
   filterTodayTraces: () => Trace[];
   loadTracesFromStorage: () => Promise<void>;
   saveTracesToStorage: () => Promise<void>;
+  loadSyncStateFromStorage: () => Promise<void>;
+  saveSyncStateToStorage: () => Promise<void>;
   clearOldTraces: () => void;
 }
 
 const STORAGE_KEY = '@zikku_traces_today';
+const SYNC_STATE_STORAGE_KEY = '@zikku_traces_sync_state';
 const TRACKING_INTERVAL = 5000; // 5초
 const SYNC_INTERVAL = 5 * 60 * 1000; // 5분
 const MIN_MOVE_METERS = 1; // 이 거리 이상 움직였을 때만 기록
+
+interface SyncState {
+  lastSyncTime: number | null;
+  lastSyncedAt: string | null;
+}
 
 // 오늘 날짜인지 확인하는 헬퍼 함수
 const isToday = (dateString: string): boolean => {
@@ -158,6 +166,50 @@ export const useTraceStore = create<TraceState>((set, get) => ({
     }
   },
 
+  saveSyncStateToStorage: async () => {
+    try {
+      const { lastSyncTime, lastSyncedAt } = get();
+      const syncState: SyncState = {
+        lastSyncTime,
+        lastSyncedAt,
+      };
+      await AsyncStorage.setItem(SYNC_STATE_STORAGE_KEY, JSON.stringify(syncState));
+    } catch (error) {
+      console.error('[TraceStore] Failed to save sync state to storage:', error);
+    }
+  },
+
+  loadSyncStateFromStorage: async () => {
+    try {
+      const stored = await AsyncStorage.getItem(SYNC_STATE_STORAGE_KEY);
+      if (stored) {
+        const syncState: SyncState = JSON.parse(stored);
+        
+        // 날짜가 바뀌었으면 동기화 상태 초기화
+        if (syncState.lastSyncTime && isDateChanged(syncState.lastSyncTime)) {
+          if (__DEV__) {
+            console.log('[TraceStore] Date changed, resetting sync state');
+          }
+          set({
+            lastSyncTime: null,
+            lastSyncedAt: null,
+          });
+          await AsyncStorage.removeItem(SYNC_STATE_STORAGE_KEY);
+        } else {
+          set({
+            lastSyncTime: syncState.lastSyncTime,
+            lastSyncedAt: syncState.lastSyncedAt,
+          });
+          if (__DEV__) {
+            console.log('[TraceStore] Loaded sync state:', syncState);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[TraceStore] Failed to load sync state from storage:', error);
+    }
+  },
+
   syncToSupabase: async () => {
     const { traces, filterTodayTraces, lastSyncedAt } = get();
     const userId = useAuthStore.getState().userId;
@@ -172,6 +224,10 @@ export const useTraceStore = create<TraceState>((set, get) => ({
     // 오늘 데이터 중 아직 Supabase에 저장하지 않은 것만 동기화
     const todayTraces = filterTodayTraces();
 
+    if (__DEV__) {
+      console.log('[TraceStore] Syncing to Supabase - Total today traces:', todayTraces.length, 'Last synced at:', lastSyncedAt);
+    }
+
     // 마지막으로 저장한 recorded_at 이후의 것만 선택
     const tracesToUpload =
       lastSyncedAt
@@ -185,6 +241,10 @@ export const useTraceStore = create<TraceState>((set, get) => ({
         console.log('[TraceStore] No new traces to sync');
       }
       return;
+    }
+
+    if (__DEV__) {
+      console.log('[TraceStore] Uploading', tracesToUpload.length, 'traces to Supabase');
     }
 
     // Supabase에 저장할 데이터 준비 (id 제외)
@@ -205,7 +265,7 @@ export const useTraceStore = create<TraceState>((set, get) => ({
       }
 
       if (__DEV__) {
-        console.log('[TraceStore] Synced traces to Supabase:', data?.length || 0);
+        console.log('[TraceStore] Successfully synced', data?.length || 0, 'traces to Supabase');
       }
 
       // 이번에 업로드한 trace 중 가장 최신 recorded_at을 기록
@@ -221,6 +281,9 @@ export const useTraceStore = create<TraceState>((set, get) => ({
         lastSyncTime: syncTime,
         lastSyncedAt: latestUploaded.recorded_at,
       });
+      
+      // 동기화 상태를 AsyncStorage에 저장
+      await get().saveSyncStateToStorage();
       
       // 날짜가 바뀌었는지 확인하고 오래된 데이터 제거
       const { lastSyncTime: prevSyncTime } = get();
@@ -250,20 +313,22 @@ export const useTraceStore = create<TraceState>((set, get) => ({
       clearInterval(syncIntervalId);
     }
 
-    // 저장된 traces 로드
-    get().loadTracesFromStorage();
+    // 저장된 traces와 동기화 상태 로드 (비동기로 실행하되 완료 후 동기화)
+    (async () => {
+      await get().loadTracesFromStorage();
+      await get().loadSyncStateFromStorage();
+      // 오래된 데이터 제거 (오늘 데이터만 유지)
+      get().clearOldTraces();
+      // 초기화 완료 후 즉시 동기화 시도 (이전에 저장된 데이터가 있을 수 있음)
+      await get().syncToSupabase();
+    })();
 
-    // 날짜가 바뀌었는지 확인하고 오래된 데이터 제거
-    const { lastSyncTime } = get();
-    if (lastSyncTime && isDateChanged(lastSyncTime)) {
-      get().clearOldTraces();
-    } else {
-      // 처음 시작하는 경우에도 오늘 데이터만 유지
-      get().clearOldTraces();
-    }
+    // 위치 추적 시작 (지속적으로 위치 업데이트)
+    useLocationStore.getState().startWatchingLocation();
 
     // 5초마다 위치 저장
     const trackingId = setInterval(() => {
+      // 현재 위치를 locationStore에서 가져옴 (watchPosition으로 지속적으로 업데이트됨)
       const latitude = useLocationStore.getState().latitude;
       const longitude = useLocationStore.getState().longitude;
 
@@ -317,8 +382,7 @@ export const useTraceStore = create<TraceState>((set, get) => ({
       syncIntervalId: syncId,
     });
 
-    // 즉시 한 번 동기화 (이전에 저장된 데이터가 있을 수 있음)
-    get().syncToSupabase();
+    // 초기화 함수에서 동기화를 실행하므로 여기서는 호출하지 않음
 
     if (__DEV__) {
       console.log('[TraceStore] Started tracking');
@@ -341,6 +405,9 @@ export const useTraceStore = create<TraceState>((set, get) => ({
 
     // 중지 전 마지막 동기화
     get().syncToSupabase();
+
+    // 위치 추적 중지
+    useLocationStore.getState().stopWatchingLocation();
 
     set({
       isTracking: false,

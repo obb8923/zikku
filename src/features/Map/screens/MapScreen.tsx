@@ -4,21 +4,13 @@ import { usePermissionStore } from '@stores/permissionStore';
 import MapView, { Region, Polyline } from 'react-native-maps';
 import { useLocationStore } from '@stores/locationStore';
 import { useTraceStore } from '@stores/traceStore';
-import { LiquidGlassButton } from '@components/LiquidGlassButton';
 import { MapDebugControls } from '../componentes/MapDebugControls';
-import PlusSmall from '@assets/svgs/PlusSmall.svg';
-import MinusSmall from '@assets/svgs/MinusSmall.svg';
-import LocationUser from '@assets/svgs/LocationUser.svg';
+import { MapControls } from '../components/MapControls';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { POLYLINE_STROKE_CONFIG, INITIAL_MAP_REGION, ZOOM_LEVEL } from '@/features/Map/constants/MAP';
 import { getPolylineStrokeWidth } from '../utils/polylineUtils';
 
-const INITIAL_REGION: Region = {
-  latitude: INITIAL_MAP_REGION.latitude,
-  longitude: INITIAL_MAP_REGION.longitude,
-  latitudeDelta: INITIAL_MAP_REGION.latitudeDelta,
-  longitudeDelta: INITIAL_MAP_REGION.longitudeDelta,
-};
+
 
 // zoom 레벨을 delta로 변환하는 유틸리티 함수
 const zoomToDelta = (zoom: number): { latitudeDelta: number; longitudeDelta: number } => {
@@ -31,7 +23,7 @@ export const MapScreen = () => {
   const requestLocationPermission = usePermissionStore((s) => s.requestLocationPermission);
   const locationPermission = usePermissionStore((s) => s.locationPermission);
   const mapRef = useRef<MapView>(null);
-  const [currentRegion, setCurrentRegion] = useState<Region | null>(INITIAL_REGION);
+  const [currentRegion, setCurrentRegion] = useState<Region | null>(INITIAL_MAP_REGION);
   const [zoomLevel, setZoomLevel] = useState<number>(13);
   const latitude = useLocationStore(state => state.latitude);
   const longitude = useLocationStore(state => state.longitude);
@@ -74,20 +66,13 @@ export const MapScreen = () => {
       });
     }
   }, [latitude, longitude, currentRegion, zoomLevel]);
-  // 위도/경도 변경 시 로깅
-  useEffect(() => {
-    if (latitude !== null && longitude !== null) {
-      // console.log(`[MapScreen] 현재 위치 - 위도: ${latitude}, 경도: ${longitude}`);
-    }
-  }, [latitude, longitude]);
 
   // 지도 region 변경 핸들러
   const handleRegionChangeComplete = useCallback((region: Region) => {
     setCurrentRegion(region);
   }, []);
 
-  const MIN_ZOOM = ZOOM_LEVEL.MIN;
-  const MAX_ZOOM = ZOOM_LEVEL.MAX;
+  
 
   const getMapCenter = useCallback(() => {
     if (currentRegion) {
@@ -102,15 +87,15 @@ export const MapScreen = () => {
     }
 
     return {
-      latitude: INITIAL_REGION.latitude,
-      longitude: INITIAL_REGION.longitude,
+      latitude: INITIAL_MAP_REGION.latitude,
+      longitude: INITIAL_MAP_REGION.longitude,
     };
   }, [currentRegion, latitude, longitude]);
 
   const handleZoomChange = useCallback(
     (delta: number) => {
       setZoomLevel(prev => {
-        const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prev + delta));
+        const next = Math.min(ZOOM_LEVEL.MAX, Math.max(ZOOM_LEVEL.MIN, prev + delta));
         const center = getMapCenter();
         const { latitudeDelta, longitudeDelta } = zoomToDelta(next);
 
@@ -142,8 +127,6 @@ export const MapScreen = () => {
       return;
     }
 
-    // 현재 보고 있는 줌(또는 region)의 delta를 그대로 사용해서
-    // 확대 레벨은 유지하고 중심만 내 위치로 이동
     const { latitudeDelta, longitudeDelta } =
       currentRegion ?? zoomToDelta(zoomLevel);
 
@@ -173,33 +156,34 @@ export const MapScreen = () => {
         })()}
         onRegionChangeComplete={handleRegionChangeComplete}
       >
-        {/* traces를 실제 지도 좌표에 고정된 Polyline으로 렌더링 */}
-        {traces.length > 0 && (
-          <Polyline
-            coordinates={traces.map((t) => ({
-              latitude: t.latitude,
-              longitude: t.longitude,
-            }))}
-            strokeColor={POLYLINE_STROKE_CONFIG.COLOR}
-            strokeWidth={getPolylineStrokeWidth(currentRegion)}
-          />
-        )}
+        {traces.length > 1 && traces.slice(1).map((trace, index) => {
+          const prevTrace = traces[index];
+          return (
+            <Polyline
+              key={`trace-${index}`}
+              coordinates={[
+                {
+                  latitude: prevTrace.latitude,
+                  longitude: prevTrace.longitude,
+                },
+                {
+                  latitude: trace.latitude,
+                  longitude: trace.longitude,
+                },
+              ]}
+              strokeColor={POLYLINE_STROKE_CONFIG.COLOR}
+              strokeWidth={getPolylineStrokeWidth(currentRegion)}
+            />
+          );
+        })}
       </MapView>
 
       {/* 지도 컨트롤용 리퀴드글래스 버튼들 */}
-      <View className="absolute gap-2" style={{right: 16, top: insets.top + 16}}>
-        <LiquidGlassButton onPress={handleZoomIn} borderRadius={8}>
-          <PlusSmall width={24} height={24} color="black" />
-        </LiquidGlassButton>
-
-        <LiquidGlassButton onPress={handleZoomOut} borderRadius={8}>
-          <MinusSmall width={24} height={24} color="black" />
-        </LiquidGlassButton>
-
-        <LiquidGlassButton onPress={handleMoveToMyLocationWithFixedZoom} borderRadius={8}>
-          <LocationUser width={24} height={24} color="black" />
-        </LiquidGlassButton>
-      </View>
+      <MapControls
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onMoveToMyLocation={handleMoveToMyLocationWithFixedZoom}
+      />
 
       {/* 개발 모드: 디버그 컨트롤 */}
       <MapDebugControls />
