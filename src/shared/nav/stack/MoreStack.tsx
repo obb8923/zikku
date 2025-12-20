@@ -1,12 +1,12 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { MoreScreen } from "@features/More/screens/MoreScreen";
-import { AuthScreen } from "@/features/Auth/screens/AuthScreen";
+import { MyInfoScreen } from "@features/MyInfo/screens/MyInfoScreen";
 
 const Stack = createNativeStackNavigator<MoreStackParamList>();
 
 export type MoreStackParamList = {
   More: undefined;
-  Auth: undefined;
+  MyInfo: undefined;
 };
 
 export const MoreStack = () => {
@@ -15,7 +15,7 @@ export const MoreStack = () => {
       screenOptions={{ headerShown: false }}
       initialRouteName="More">
       <Stack.Screen name="More" component={MoreScreen} />
-      <Stack.Screen name="Auth" component={AuthScreen} />
+      <Stack.Screen name="MyInfo" component={MyInfoScreen} />
     </Stack.Navigator>
   );
 };

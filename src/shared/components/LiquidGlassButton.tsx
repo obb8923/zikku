@@ -6,7 +6,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { LiquidGlassView } from './LiquidGlassView';
-
+import { BUTTON_SIZE_SMALL, BUTTON_SIZE_MEDIUM, BUTTON_SIZE_LARGE } from '../constants/NORMAL';
 export type LiquidGlassButtonProps = {
   onPress: (event: GestureResponderEvent) => void;
   disabled?: boolean;
@@ -22,9 +22,9 @@ export const LiquidGlassButton = ({
   size = 'medium',
 }: LiquidGlassButtonProps) => {
   const sizeStyle = {
-    small: {width: 32, height: 32},
-    medium: {width: 44, height: 44},
-    large: {width: 56, height: 56},
+    small: {width: BUTTON_SIZE_SMALL, height: BUTTON_SIZE_SMALL},
+    medium: {width: BUTTON_SIZE_MEDIUM, height: BUTTON_SIZE_MEDIUM},
+    large: {width: BUTTON_SIZE_LARGE, height: BUTTON_SIZE_LARGE},
   };
   return (
     <LiquidGlassView
