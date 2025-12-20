@@ -35,7 +35,7 @@ interface TraceState {
 const STORAGE_KEY = '@zikku_traces_today';
 const TRACKING_INTERVAL = 5000; // 5초
 const SYNC_INTERVAL = 5 * 60 * 1000; // 5분
-const MIN_MOVE_METERS = 5; // 이 거리 이상 움직였을 때만 기록
+const MIN_MOVE_METERS = 1; // 이 거리 이상 움직였을 때만 기록
 
 // 오늘 날짜인지 확인하는 헬퍼 함수
 const isToday = (dateString: string): boolean => {

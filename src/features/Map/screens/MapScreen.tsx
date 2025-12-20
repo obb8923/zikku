@@ -1,20 +1,23 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, TouchableOpacity, Text } from 'react-native';
+import { View } from 'react-native';
 import { usePermissionStore } from '@stores/permissionStore';
 import MapView, { Region, Polyline } from 'react-native-maps';
 import { useLocationStore } from '@stores/locationStore';
 import { useTraceStore } from '@stores/traceStore';
-import { MapFAB } from '../componentes/MapFAB';
 import { LiquidGlassButton } from '@components/LiquidGlassButton';
+import { MapDebugControls } from '../componentes/MapDebugControls';
 import PlusSmall from '@assets/svgs/PlusSmall.svg';
 import MinusSmall from '@assets/svgs/MinusSmall.svg';
 import LocationUser from '@assets/svgs/LocationUser.svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { POLYLINE_STROKE_CONFIG, INITIAL_MAP_REGION, ZOOM_LEVEL } from '@/features/Map/constants/MAP';
+import { getPolylineStrokeWidth } from '../utils/polylineUtils';
+
 const INITIAL_REGION: Region = {
-  latitude: 37.5665,
-  longitude: 126.9780,
-  latitudeDelta: 0.0922,
-  longitudeDelta: 0.0421,
+  latitude: INITIAL_MAP_REGION.latitude,
+  longitude: INITIAL_MAP_REGION.longitude,
+  latitudeDelta: INITIAL_MAP_REGION.latitudeDelta,
+  longitudeDelta: INITIAL_MAP_REGION.longitudeDelta,
 };
 
 // zoom 레벨을 delta로 변환하는 유틸리티 함수
@@ -33,9 +36,6 @@ export const MapScreen = () => {
   const latitude = useLocationStore(state => state.latitude);
   const longitude = useLocationStore(state => state.longitude);
   const fetchLocation = useLocationStore(state => state.fetchLocation);
-  const setLocation = useLocationStore(state => state.setLocation);
-  const [isMovingLeft, setIsMovingLeft] = useState(false);
-  const moveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const insets = useSafeAreaInsets();
   // Trace store
   const traces = useTraceStore(state => state.traces);
@@ -86,8 +86,8 @@ export const MapScreen = () => {
     setCurrentRegion(region);
   }, []);
 
-  const MIN_ZOOM = 5;
-  const MAX_ZOOM = 19;
+  const MIN_ZOOM = ZOOM_LEVEL.MIN;
+  const MAX_ZOOM = ZOOM_LEVEL.MAX;
 
   const getMapCenter = useCallback(() => {
     if (currentRegion) {
@@ -155,40 +155,6 @@ export const MapScreen = () => {
     });
   }, [latitude, longitude, currentRegion, zoomLevel]);
 
-  // 개발 모드: 왼쪽으로 이동하는 토글 버튼
-  const handleToggleMoveLeft = useCallback(() => {
-    if (!latitude || !longitude) return;
-
-    if (isMovingLeft) {
-      // 정지
-      if (moveIntervalRef.current) {
-        clearInterval(moveIntervalRef.current);
-        moveIntervalRef.current = null;
-      }
-      setIsMovingLeft(false);
-    } else {
-      // 시작
-      setIsMovingLeft(true);
-      moveIntervalRef.current = setInterval(() => {
-        const currentLat = useLocationStore.getState().latitude;
-        const currentLng = useLocationStore.getState().longitude;
-        if (currentLat !== null && currentLng !== null) {
-          // 왼쪽으로 이동 (longitude 감소)
-          // 약 0.0001도씩 이동 (약 11m)
-          setLocation(currentLat, currentLng - 0.0001);
-        }
-      }, 100); // 100ms마다 업데이트
-    }
-  }, [isMovingLeft, latitude, longitude, setLocation]);
-
-  // 컴포넌트 언마운트 시 interval 정리
-  useEffect(() => {
-    return () => {
-      if (moveIntervalRef.current) {
-        clearInterval(moveIntervalRef.current);
-      }
-    };
-  }, []);
 
   return (
     <View className="flex-1">
@@ -197,7 +163,7 @@ export const MapScreen = () => {
         ref={mapRef}
         showsUserLocation={locationPermission}
         initialRegion={(() => {
-          const { latitudeDelta, longitudeDelta } = zoomToDelta(13);
+          const { latitudeDelta, longitudeDelta } = zoomToDelta(ZOOM_LEVEL.DEFAULT);
           return {
             latitude: latitude || 37.5666102,
             longitude: longitude || -129.9783881,
@@ -214,13 +180,11 @@ export const MapScreen = () => {
               latitude: t.latitude,
               longitude: t.longitude,
             }))}
-            strokeColor="#3B82F6"
-            strokeWidth={3}
+            strokeColor={POLYLINE_STROKE_CONFIG.COLOR}
+            strokeWidth={getPolylineStrokeWidth(currentRegion)}
           />
         )}
       </MapView>
-      {/* FAB 버튼 */}
-      {/* <MapFAB /> */}
 
       {/* 지도 컨트롤용 리퀴드글래스 버튼들 */}
       <View className="absolute gap-2" style={{right: 16, top: insets.top + 16}}>
@@ -237,19 +201,8 @@ export const MapScreen = () => {
         </LiquidGlassButton>
       </View>
 
-      {/* 개발 모드: 왼쪽 이동 토글 버튼 */}
-      {__DEV__ && (
-        <View className="absolute top-36 left-0 right-0 items-center">
-          <TouchableOpacity
-            onPress={handleToggleMoveLeft}
-            className="px-4 py-2 rounded-full bg-red-500 shadow-lg"
-          >
-            <Text className="text-white font-semibold">
-              {isMovingLeft ? '정지' : '왼쪽 이동'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {/* 개발 모드: 디버그 컨트롤 */}
+      <MapDebugControls />
 
     </View>
   );
