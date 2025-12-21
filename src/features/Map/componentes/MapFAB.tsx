@@ -73,6 +73,8 @@ export const MapFAB = () => {
         uri: asset.uri,
         fileName: asset.fileName,
         type: asset.type,
+        width: asset.width,
+        height: asset.height,
       };
 
       navigation.navigate('RecordCreate', { image });
