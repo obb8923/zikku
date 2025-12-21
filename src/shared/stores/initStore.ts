@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Platform } from 'react-native';
 import { useOnboardingStore } from './onboardingStore';
+import { useRecordStore } from './recordStore';
+import { useAuthStore } from './authStore';
 import { SUPABASE_WEB_CLIENT_KEY } from '@env';
 
 export const useAppInitialization = () => {
@@ -8,6 +10,9 @@ export const useAppInitialization = () => {
   const [initializationError, setInitializationError] = useState<Error | null>(null);
 
   const { checkOnboardingStatus, isOnboardingCompleted } = useOnboardingStore();
+  const checkLoginStatus = useAuthStore(state => state.checkLoginStatus);
+  const loadRecordsFromStorage = useRecordStore(state => state.loadRecordsFromStorage);
+  const fetchRecords = useRecordStore(state => state.fetchRecords);
 
   useEffect(() => {
     let isMounted = true;
@@ -38,6 +43,45 @@ export const useAppInitialization = () => {
           }
         }
 
+        // 2. 로그인 상태 확인
+        if (isMounted) {
+          try {
+            await checkLoginStatus();
+            if (__DEV__) console.log('[useAppInitialization] Login status checked');
+          } catch (error) {
+            if (__DEV__) console.error('[useAppInitialization] Error checking login status:', error);
+          }
+        }
+
+        // 3. 로컬 스토리지에서 records 불러오기
+        if (isMounted) {
+          try {
+            console.log('[useAppInitialization] 로컬 스토리지에서 records 불러오기 시작');
+            await loadRecordsFromStorage();
+            if (__DEV__) console.log('[useAppInitialization] Records loaded from storage');
+          } catch (error) {
+            if (__DEV__) console.error('[useAppInitialization] Error loading records from storage:', error);
+          }
+        }
+
+        // 4. DB에서 records 가져오기 (로그인된 경우에만)
+        if (isMounted) {
+          try {
+            const userId = useAuthStore.getState().userId;
+            if (userId) {
+              console.log('[useAppInitialization] 로그인 상태 확인됨, DB에서 records 가져오기 시작, userId:', userId);
+              // 비동기로 실행하되 초기화를 막지 않음
+              fetchRecords().catch((error) => {
+                if (__DEV__) console.error('[useAppInitialization] Error fetching records from DB:', error);
+              });
+            } else {
+              console.log('[useAppInitialization] 로그인되지 않음, DB에서 records 가져오기 건너뜀');
+            }
+          } catch (error) {
+            if (__DEV__) console.error('[useAppInitialization] Error initiating record fetch:', error);
+          }
+        }
+
         if (isMounted) {
           setIsInitialized(true);
         }
@@ -60,7 +104,7 @@ export const useAppInitialization = () => {
       isMounted = false;
       clearTimeout(timeoutId);
     };
-  }, [checkOnboardingStatus]);
+  }, [checkOnboardingStatus, checkLoginStatus, loadRecordsFromStorage, fetchRecords]);
 
 
   return {

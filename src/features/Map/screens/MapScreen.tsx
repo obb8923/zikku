@@ -36,10 +36,8 @@ export const MapScreen = () => {
   const traces = useTraceStore(state => state.traces);
   const startTracking = useTraceStore(state => state.startTracking);
   const stopTracking = useTraceStore(state => state.stopTracking);
-  // Record store
+  // Record store (로컬 스토어에서만 읽기)
   const records = useRecordStore(state => state.records);
-  const fetchRecords = useRecordStore(state => state.fetchRecords);
-  const isLoadingRecords = useRecordStore(state => state.isLoading);
   // Record detail modal
   const [selectedRecord, setSelectedRecord] = useState<Record | null>(null);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
@@ -52,11 +50,6 @@ export const MapScreen = () => {
     };
     void initializeLocation();
   }, [requestLocationPermission, fetchLocation]);
-  
-  // 화면 진입 시 records 가져오기
-  useEffect(() => {
-    void fetchRecords();
-  }, [fetchRecords]);
 
   // 추적 시작/중지
   useEffect(() => {

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapView, { Region, Marker } from 'react-native-maps';
 import { useLocationStore } from '@stores/locationStore';
 import { useAuthStore } from '@stores/authStore';
+import { useRecordStore } from '@stores/recordStore';
 import { DEVICE_HEIGHT, DEVICE_WIDTH } from '@constants/NORMAL';
 import { BUTTON_SIZE_MEDIUM } from '@constants/NORMAL';
 import { INITIAL_MAP_REGION, ZOOM_LEVEL } from '@/features/Map/constants/MAP';
@@ -51,6 +52,7 @@ export const RecordModal = ({ visible, onClose, image }: RecordModalProps) => {
   const currentLatitude = useLocationStore(state => state.latitude);
   const currentLongitude = useLocationStore(state => state.longitude);
   const userId = useAuthStore(state => state.userId);
+  const addRecord = useRecordStore(state => state.addRecord);
   
   // 초기 위치 설정 (현재 위치 또는 기본 위치)
   useEffect(() => {
@@ -148,7 +150,7 @@ export const RecordModal = ({ visible, onClose, image }: RecordModalProps) => {
     
     try {
       const category = CHIP_TYPE[selectedCategory];
-      await saveRecord(
+      const savedRecord = await saveRecord(
         image,
         userId,
         selectedLocation.latitude,
@@ -156,6 +158,11 @@ export const RecordModal = ({ visible, onClose, image }: RecordModalProps) => {
         category,
         note || undefined,
       );
+      
+      // 로컬 스토어에 추가
+      if (savedRecord) {
+        addRecord(savedRecord);
+      }
       
       Alert.alert('성공', '레코드가 저장되었습니다.', [
         {
