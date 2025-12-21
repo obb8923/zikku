@@ -54,7 +54,7 @@ export const Chip = ({ chipType, color, tintColor }: ChipProps) => {
         justifyContent: 'center',
         paddingHorizontal: 16,
         paddingVertical: 6,
-        alignSelf: 'flex-end',
+        alignSelf: 'flex-start',
       }}
     >
       {IconComponent && (

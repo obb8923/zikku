@@ -1,12 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { View, Image } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Image, Keyboard, ScrollView, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Portal } from '@gorhom/portal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SubjectStickerService, type StickerResult } from '@shared/services';
-import {DEVICE_WIDTH,DEVICE_HEIGHT} from '@constants/NORMAL';
-import {BUTTON_SIZE_MEDIUM} from '@constants/NORMAL';
-import { Chip, LiquidGlassButton, Text } from '@components/index';
+import MapView, { Region, Marker } from 'react-native-maps';
+import { useLocationStore } from '@stores/locationStore';
+import { useAuthStore } from '@stores/authStore';
+import { DEVICE_HEIGHT, DEVICE_WIDTH } from '@constants/NORMAL';
+import { BUTTON_SIZE_MEDIUM } from '@constants/NORMAL';
+import { INITIAL_MAP_REGION, ZOOM_LEVEL } from '@/features/Map/constants/MAP';
+import { CHIP_TYPE, type ChipTypeKey } from '@constants/CHIP';
+import { Chip, LiquidGlassButton, LiquidGlassInput, LiquidGlassView, Text, CategorySelectModal } from '@components/index';
+import { MapControls } from '@/features/Map/components/MapControls';
+import { saveRecord } from '@libs/supabase/recordService';
 import PlusSmallIcon from '@assets/svgs/PlusSmall.svg';
+import MarkerPinIcon from '@assets/svgs/MarkerPin.svg';
+
 interface ImageData {
   uri: string;
   fileName?: string;
@@ -21,252 +29,154 @@ interface RecordModalProps {
   image?: ImageData | null;
 }
 
+// zoom 레벨을 delta로 변환하는 유틸리티 함수
+const zoomToDelta = (zoom: number): { latitudeDelta: number; longitudeDelta: number } => {
+  const latitudeDelta = 360 / Math.pow(2, zoom);
+  const longitudeDelta = latitudeDelta; 
+  return { latitudeDelta, longitudeDelta };
+};
+
 export const RecordModal = ({ visible, onClose, image }: RecordModalProps) => {
   const insets = useSafeAreaInsets();
-  const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
-  const [containerWidth, setContainerWidth] = useState<number | null>(null);
-  const [displayImageSize, setDisplayImageSize] = useState<{ width: number; height: number } | null>(null);
-
-  // URI 정규화 함수
-  const normalizeUri = (uri: string): string => {
-    if (!uri) return uri;
-    
-    // 이미 올바른 형식인 경우 그대로 반환
-    if (uri.startsWith('http://') || 
-        uri.startsWith('https://') || 
-        uri.startsWith('file://') ||
-        uri.startsWith('content://') ||
-        uri.startsWith('ph://') ||
-        uri.startsWith('assets-library://')) {
-      return uri;
-    }
-    
-    // 절대 경로인 경우 file:// 추가
-    if (uri.startsWith('/')) {
-      return `file://${uri}`;
-    }
-    
-    return uri;
-  };
-
-  // 이미지 크기 가져오기 (여러 방법 시도)
-  const getImageSizeWithFallback = async (uri: string): Promise<{ width: number; height: number } | null> => {
-    return new Promise((resolve) => {
-      // 방법 1: resolveAssetSource로 경로 처리 시도 (로컬 파일)
-      try {
-        const resolvedSource = Image.resolveAssetSource({ uri });
-        if (resolvedSource && resolvedSource.width && resolvedSource.height) {
-          console.log('[RecordModal] resolveAssetSource로 크기 가져오기 성공:', {
-            width: resolvedSource.width,
-            height: resolvedSource.height,
-            uri
-          });
-          resolve({
-            width: resolvedSource.width,
-            height: resolvedSource.height
-          });
-          return;
-        }
-      } catch (error) {
-        console.log('[RecordModal] resolveAssetSource 실패:', error);
-      }
-
-      // 방법 2: file:// 접두사 제거 후 시도 (iOS 시뮬레이터 호환성)
-      let uriToTry = uri;
-      if (uri.startsWith('file://')) {
-        uriToTry = uri.replace('file://', '');
-        console.log('[RecordModal] file:// 제거 후 시도:', uriToTry);
-        
-        Image.getSize(
-          uriToTry,
-          (width, height) => {
-            console.log('[RecordModal] Image.getSize (file:// 제거) 성공:', { width, height });
-            resolve({ width, height });
-          },
-          (error) => {
-            console.log('[RecordModal] Image.getSize (file:// 제거) 실패, 원본 URI 시도:', error);
-            // 방법 3: 원본 URI로 다시 시도
-            tryGetSizeWithOriginalUri(uri, resolve);
-          }
-        );
-        return;
-      }
-
-      // 방법 3: 원본 URI로 시도
-      tryGetSizeWithOriginalUri(uri, resolve);
-    });
-  };
-
-  // 원본 URI로 Image.getSize 시도
-  const tryGetSizeWithOriginalUri = (uri: string, resolve: (value: { width: number; height: number } | null) => void) => {
-    Image.getSize(
-      uri,
-      (width, height) => {
-        console.log('[RecordModal] Image.getSize (원본 URI) 성공:', { width, height, uri });
-        resolve({ width, height });
-      },
-      (error) => {
-        console.error('[RecordModal] Image.getSize 최종 실패:', error, 'URI:', uri);
-        resolve(null);
-      }
-    );
-  };
-
-  // 이미지 원본 크기 가져오기
-  useEffect(() => {
-    if (!image?.uri) {
-      setImageSize(null);
-      return;
-    }
-
-    let isCancelled = false;
-    
-    console.log('[RecordModal] 이미지 URI 확인:', image.uri);
-    console.log('[RecordModal] 이미지 metadata:', { width: image.width, height: image.height });
-    
-    // metadata에서 크기 정보가 있으면 우선 사용
-    if (image.width && image.height && image.width > 0 && image.height > 0) {
-      console.log('[RecordModal] metadata에서 크기 정보 사용:', { width: image.width, height: image.height });
-      setImageSize({ width: image.width, height: image.height });
-      return;
-    }
-    
-    // URI 정규화: 로컬 파일 경로 처리
-    const normalizedUri = normalizeUri(image.uri);
-    console.log('[RecordModal] 정규화된 URI:', normalizedUri);
-    
-    // 이미지 크기 가져오기 (resolveAssetSource 우선, 실패 시 Image.getSize)
-    getImageSizeWithFallback(normalizedUri).then((size) => {
-      if (isCancelled) return;
-      
-      if (!size || !size.width || !size.height || size.width <= 0 || size.height <= 0) {
-        console.warn('[RecordModal] 이미지 크기가 유효하지 않음:', size);
-        setImageSize(null);
-        return;
-      }
-      
-      setImageSize({ width: size.width, height: size.height });
-    }).catch((error) => {
-      if (isCancelled) return;
-      console.error('[RecordModal] 이미지 크기 가져오기 최종 실패:', error);
-      setImageSize(null);
-    });
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [image?.uri]);
-
-  // 상위 뷰 폭과 이미지 원본 크기를 기반으로 표시 크기 계산
-  useEffect(() => {
-    if (!containerWidth || !imageSize) {
-      setDisplayImageSize(null);
-      return;
-    }
-
-    // padding 8 * 2 = 16 (좌우 각 8) = 32px 총
-    // Tailwind p-8은 32px이므로 좌우 각 32px = 64px
-    const padding = 64; // p-8 = 32px * 2
-    const availableWidth = containerWidth - padding;
-    
-    // 이미지 비율 계산
-    const imageAspectRatio = imageSize.width / imageSize.height;
-    
-    // 상위 뷰의 폭을 기준으로 width 결정
-    const displayWidth = availableWidth;
-    // 비율에 맞춰 height 계산: (원본 height / 원본 width) * 설정된 width
-    const displayHeight = (imageSize.height / imageSize.width) * displayWidth;
-    
-    setDisplayImageSize({ width: displayWidth, height: displayHeight });
-  }, [containerWidth, imageSize]);
-
-  // 이미지 추출 기능 임시 주석 처리
-  // useEffect(() => {
-  //   if (visible && image?.uri) {
-  //     // UI가 먼저 렌더링되도록 무거운 작업을 다음 프레임으로 지연
-  //     const timeoutId = setTimeout(() => {
-  //       handleExtractSubjects();
-  //     }, 0);
-  //     
-  //     return () => {
-  //       clearTimeout(timeoutId);
-  //     };
-  //   } else {
-  //     // 모달이 닫히면 상태 초기화
-  //     setStickers([]);
-  //     setIsLoading(false);
-  //     setExtractionFailed(false);
-  //   }
-  // }, [visible, image?.uri]);
-
-  // 이미지 추출 기능 임시 주석 처리
-  // const handleExtractSubjects = async () => {
-  //   if (!image?.uri) {
-  //     return;
-  //   }
-
-  //   setIsLoading(true);
-  //   setExtractionFailed(false);
-
-  //   try {
-  //     const isSupported = await SubjectStickerService.isSupported();
-  //     console.log('[RecordModal] 지원 여부:', isSupported);
-
-  //     if (!isSupported) {
-  //       setExtractionFailed(true);
-  //       setStickers([]);
-  //       return;
-  //     }
-
-  //     const results = await SubjectStickerService.analyzeImage(image.uri);
-  //     console.log('[RecordModal] 분석 결과:', {
-  //       count: results.length,
-  //       results: results.map(r => ({
-  //         id: r.id,
-  //         uri: r.uri,
-  //         width: r.width,
-  //         height: r.height,
-  //         method: r.method,
-  //       })),
-  //     });
-
-  //     if (results.length > 0) {
-  //       setStickers(results);
-  //       setExtractionFailed(false);
-  //     } else {
-  //       setExtractionFailed(true);
-  //       setStickers([]);
-  //     }
-  //   } catch (e) {
-  //     setExtractionFailed(true);
-  //     setStickers([]);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  // 원본 이미지 그대로 사용 (이미지 추출 기능 주석 처리)
-  // iOS에서 file:// 경로는 제거한 버전이 더 잘 작동할 수 있음
-  const getImageSourceUri = (uri: string | undefined): string | undefined => {
-    if (!uri) return undefined;
-    // file:// 접두사 제거 (iOS 호환성)
-    if (uri.startsWith('file://')) {
-      return uri.replace('file://', '');
-    }
-    return normalizeUri(uri);
-  };
+  const [note, setNote] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<ChipTypeKey>('LANDSCAPE');
+  const [selectedLocation, setSelectedLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [mapRegion, setMapRegion] = useState<Region | null>(null);
+  const [zoomLevel, setZoomLevel] = useState<number>(ZOOM_LEVEL.DEFAULT);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
+  const mapRef = useRef<MapView>(null);
   
-  // const imageUri = image?.uri ? getImageSourceUri(image.uri) : undefined;
-  const imageUri = image?.uri;
-
-  // 이미지 URI 변경 로그
+  // 현재 위치 가져오기
+  const currentLatitude = useLocationStore(state => state.latitude);
+  const currentLongitude = useLocationStore(state => state.longitude);
+  const userId = useAuthStore(state => state.userId);
+  
+  // 초기 위치 설정 (현재 위치 또는 기본 위치)
   useEffect(() => {
-    if (imageUri) {
-      console.log('[RecordModal] 렌더링용 이미지 URI:', imageUri);
-    } else {
-      console.log('[RecordModal] 이미지 URI 없음');
+    if (visible && !selectedLocation) {
+      const initialLat = currentLatitude ?? INITIAL_MAP_REGION.latitude;
+      const initialLng = currentLongitude ?? INITIAL_MAP_REGION.longitude;
+      const { latitudeDelta, longitudeDelta } = zoomToDelta(ZOOM_LEVEL.DEFAULT);
+      
+      setSelectedLocation({ latitude: initialLat, longitude: initialLng });
+      setMapRegion({
+        latitude: initialLat,
+        longitude: initialLng,
+        latitudeDelta,
+        longitudeDelta,
+      });
     }
-  }, [imageUri]);
+  }, [visible, currentLatitude, currentLongitude, selectedLocation]);
+  
+  // 지도 region 변경 핸들러 - 중앙 좌표 업데이트
+  const handleRegionChangeComplete = useCallback((region: Region) => {
+    setMapRegion(region);
+    setSelectedLocation({
+      latitude: region.latitude,
+      longitude: region.longitude,
+    });
+    // zoom level 계산
+    const calculatedZoom = Math.round(Math.log2(360 / region.latitudeDelta));
+    setZoomLevel(calculatedZoom);
+  }, []);
+  
+  // 줌 변경 핸들러
+  const handleZoomChange = useCallback(
+    (delta: number) => {
+      if (!mapRegion || !mapRef.current) return;
+      
+      const next = Math.min(ZOOM_LEVEL.MAX, Math.max(ZOOM_LEVEL.MIN, zoomLevel + delta));
+      const { latitudeDelta, longitudeDelta } = zoomToDelta(next);
+      
+      mapRef.current.animateToRegion({
+        latitude: mapRegion.latitude,
+        longitude: mapRegion.longitude,
+        latitudeDelta,
+        longitudeDelta,
+      });
+      
+      setZoomLevel(next);
+    },
+    [mapRegion, zoomLevel],
+  );
+  
+  // 줌 인
+  const handleZoomIn = useCallback(() => {
+    handleZoomChange(1);
+  }, [handleZoomChange]);
+  
+  // 줌 아웃
+  const handleZoomOut = useCallback(() => {
+    handleZoomChange(-1);
+  }, [handleZoomChange]);
+  
+  // 내 위치로 이동
+  const handleMoveToMyLocation = useCallback(() => {
+    if (!currentLatitude || !currentLongitude || !mapRef.current || !mapRegion) {
+      return;
+    }
+    
+    const { latitudeDelta, longitudeDelta } = mapRegion;
+    
+    mapRef.current.animateToRegion({
+      latitude: currentLatitude,
+      longitude: currentLongitude,
+      latitudeDelta,
+      longitudeDelta,
+    });
+  }, [currentLatitude, currentLongitude, mapRegion]);
+  
+  // 저장 핸들러
+  const handleSave = useCallback(async () => {
+    if (!image?.uri) {
+      Alert.alert('오류', '이미지가 필요합니다.');
+      return;
+    }
+    
+    if (!selectedLocation) {
+      Alert.alert('오류', '위치를 선택해주세요.');
+      return;
+    }
+    
+    if (!userId) {
+      Alert.alert('오류', '로그인이 필요합니다.');
+      return;
+    }
+    
+    setIsSaving(true);
+    
+    try {
+      const category = CHIP_TYPE[selectedCategory];
+      await saveRecord(
+        image,
+        userId,
+        selectedLocation.latitude,
+        selectedLocation.longitude,
+        category,
+        note || undefined,
+      );
+      
+      Alert.alert('성공', '레코드가 저장되었습니다.', [
+        {
+          text: '확인',
+          onPress: () => {
+            onClose();
+            // 상태 초기화
+            setNote('');
+            setSelectedCategory('LANDSCAPE');
+            setSelectedLocation(null);
+            setMapRegion(null);
+          },
+        },
+      ]);
+    } catch (error: any) {
+      console.error('저장 오류:', error);
+      Alert.alert('오류', error.message || '레코드 저장에 실패했습니다.');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [image, selectedLocation, selectedCategory, note, userId, onClose]);
 
   if (!visible) {
     return null;
@@ -294,69 +204,147 @@ export const RecordModal = ({ visible, onClose, image }: RecordModalProps) => {
           pointerEvents="box-none"
         >
           {/* 모달 컨텐츠 영역 */}
-          <View className="flex-1 px-8 justify-between">
-          {/* 뒤로가기 버튼 */}
-          <View className="w-full h-auto mb-2">
-          <View style={{ zIndex: 10,transform: [{rotate: '45deg'}], width: BUTTON_SIZE_MEDIUM, height: BUTTON_SIZE_MEDIUM }}>
-            <LiquidGlassButton onPress={onClose} size="medium">
-              <PlusSmallIcon width={24} height={24} color="black" />
-            </LiquidGlassButton>
-          </View>
-          </View>
-
-
-          {/* 폴라로이드 */}
-          <View 
-          className="w-auto p-8" 
-          style={{ 
-            maxHeight: DEVICE_HEIGHT * 0.6,
-            maxWidth: DEVICE_WIDTH * 0.7,
-            minHeight: DEVICE_HEIGHT * 0.3,
-            minWidth: DEVICE_WIDTH * 0.4,
-            backgroundColor: '#E1E0DF'
-          }}
-          onLayout={(event) => {
-            const { width } = event.nativeEvent.layout;
-            setContainerWidth(width);
-          }}
-          >
-          {/* 스티커 */}
-          {imageUri && displayImageSize && (
-            <View 
-              style={{
-                width: displayImageSize.width,
-                height: displayImageSize.height,
-                alignSelf: 'center',
-                backgroundColor: '#000'
-              }}
-            >
-              <Image
-                source={{ uri: imageUri }}
-                style={{ 
-                  width: displayImageSize.width, 
-                  height: displayImageSize.height 
-                }}
-                resizeMode="contain"
-              />
-            </View>
-          )}
-          {/* 여백, 노트 */}
-          <View className="w-full h-24 bg-red-500">
-            <Text text="12:34" type="digit" />
-            {/* <Note text="노트" /> */}
-          </View>
-          </View>
-
-          {/* 칩 영역 */}
-              <View className="w-full mb-4 h-1/12 bg-red-500">
-                <Chip chipType="LANDSCAPE"/>
+          <View className="flex-1 px-8">
+            {/* 뒤로가기 버튼 , 메모 */}
+            <View className="flex-row  gap-2 w-full h-auto mb-2">
+              <View style={{ zIndex: 10, transform: [{rotate: '45deg'}], width: BUTTON_SIZE_MEDIUM, height: BUTTON_SIZE_MEDIUM }}>
+                <LiquidGlassButton onPress={onClose} size="medium">
+                  <PlusSmallIcon width={24} height={24} color="black" />
+                </LiquidGlassButton>
               </View>
+              <View className="flex-1">
+              <LiquidGlassInput
+                placeholder="메모(선택)"
+                value={note}
+                onChangeText={setNote}
+                multiline
+                numberOfLines={1}
+                textAlignVertical="top"
+                returnKeyType="done"
+                onSubmitEditing={() => Keyboard.dismiss()}
+              />
+              </View>
+            </View>
+            <ScrollView 
+            showsVerticalScrollIndicator={false} 
+            bounces={false}
+            contentContainerStyle={{ paddingBottom: 16 }}>
+           
+            
+            {/* 이미지 영역 */}
+            {image?.uri && (
+              <View className="items-center justify-center">
+                <Image
+                  source={{ uri: image?.uri }}
+                  style={{
+                    borderRadius: 8,
+                    marginVertical: 16,
+                    width: '100%',
+                    height: DEVICE_HEIGHT * 0.3,
+                  }}
+                  resizeMode="contain"
+                />
+              </View>
+            )}
           
+            {/* 칩 영역 */}
+            <View className="flex-row w-full h-1/12 gap-8">
+            <LiquidGlassView 
+            className=""
+            borderRadius={16}
+            style={{
+              borderTopLeftRadius: 16,
+              borderTopRightRadius: 16,
+              borderBottomLeftRadius: 0,
+              borderBottomRightRadius: 0,
+            }}
+            innerStyle={{ 
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              borderTopLeftRadius: 16,
+              borderTopRightRadius: 16,
+              borderBottomLeftRadius: 0,
+              borderBottomRightRadius: 0,
+              paddingHorizontal: 16,
+            }}>
+              <Text text="사진 위치" type="body2" style={{ textAlign: 'center' ,color: 'white' }} />
+            </LiquidGlassView>
+            <View className="flex-1 items-end justify-center mb-2">
+              <TouchableOpacity
+                onPress={() => setIsCategoryModalVisible(true)}
+                disabled={isSaving}
+              >
+                <Chip chipType={selectedCategory}/>
+                </TouchableOpacity>
+            </View>
+            </View>
+            
+           
+             {/* 지도 영역 */}
+             {mapRegion && selectedLocation && (
+              <View className="w-full relative" style={{ height: DEVICE_HEIGHT * 0.3 }}>
+                <MapView
+                  ref={mapRef}
+                  style={{ width: '100%', height: '100%', borderRadius: 16 }}
+                  initialRegion={mapRegion}
+                  onRegionChangeComplete={handleRegionChangeComplete}
+                  showsUserLocation={false}
+                  showsMyLocationButton={false}
+                  scrollEnabled={true}
+                  zoomEnabled={true}
+                  pitchEnabled={false}
+                  rotateEnabled={false}
+                >
+                  <Marker
+                    coordinate={{
+                      latitude: selectedLocation.latitude,
+                      longitude: selectedLocation.longitude,
+                    }}
+                    anchor={{ x: 0.5, y: 1 }}
+                  >
+                    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+                      <Text type="body2" text="📍" />
+                    </View>
+                  </Marker>
+                </MapView>
+                {/* 지도 컨트롤 */}
+                <MapControls
+                  onZoomIn={handleZoomIn}
+                  onZoomOut={handleZoomOut}
+                  onMoveToMyLocation={handleMoveToMyLocation}
+                  containerStyle={{ right: 8, top: 8 }}
+                />
+              </View>
+            )}
+            </ScrollView>
+             {/* 저장 버튼 */}
+             <View className="w-full items-center justify-center">
+             <LiquidGlassButton
+              onPress={handleSave}
+              disabled={isSaving || !image?.uri || !selectedLocation}
+              borderRadius={16}
+            >
+              <View className="items-center justify-center">
+                {isSaving ? (
+                  <ActivityIndicator size="small" color="#000" />
+                ) : (
+                  <Text type="body1" text="저장" style={{ fontWeight: '500' }} />
+                )}
+              </View>
+            </LiquidGlassButton>
+            </View>
           </View>
+        </View>
       </View>
-      </View>
+      
+      {/* 카테고리 선택 모달 */}
+      <CategorySelectModal
+        visible={isCategoryModalVisible}
+        onClose={() => setIsCategoryModalVisible(false)}
+        onSelect={setSelectedCategory}
+        disabled={isSaving}
+      />
     </Portal>
   );
 };
-
-

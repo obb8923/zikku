@@ -1,14 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { usePermissionStore } from '@stores/permissionStore';
-import MapView, { Region, Polyline } from 'react-native-maps';
+import MapView, { Region, Polyline, Marker } from 'react-native-maps';
 import { useLocationStore } from '@stores/locationStore';
 import { useTraceStore } from '@stores/traceStore';
+import { useRecordStore, Record } from '@stores/recordStore';
 import { MapDebugControls } from '../componentes/MapDebugControls';
 import { MapControls } from '../components/MapControls';
+import { RecordDetailModal } from '@components/index';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { POLYLINE_STROKE_CONFIG, INITIAL_MAP_REGION, ZOOM_LEVEL } from '@/features/Map/constants/MAP';
 import { getPolylineStrokeWidth } from '../utils/polylineUtils';
+import MarkerPinIcon from '@assets/svgs/MarkerPin.svg';
 
 
 
@@ -33,6 +36,13 @@ export const MapScreen = () => {
   const traces = useTraceStore(state => state.traces);
   const startTracking = useTraceStore(state => state.startTracking);
   const stopTracking = useTraceStore(state => state.stopTracking);
+  // Record store
+  const records = useRecordStore(state => state.records);
+  const fetchRecords = useRecordStore(state => state.fetchRecords);
+  const isLoadingRecords = useRecordStore(state => state.isLoading);
+  // Record detail modal
+  const [selectedRecord, setSelectedRecord] = useState<Record | null>(null);
+  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
 
   // 화면 진입 시 위치 권한 요청 및 현재 위치 가져오기
   useEffect(() => {
@@ -42,6 +52,11 @@ export const MapScreen = () => {
     };
     void initializeLocation();
   }, [requestLocationPermission, fetchLocation]);
+  
+  // 화면 진입 시 records 가져오기
+  useEffect(() => {
+    void fetchRecords();
+  }, [fetchRecords]);
 
   // 추적 시작/중지
   useEffect(() => {
@@ -176,6 +191,26 @@ export const MapScreen = () => {
             />
           );
         })}
+        
+        {/* Records 마커 표시 */}
+        {records.map((record) => (
+          <Marker
+            key={record.id}
+            coordinate={{
+              latitude: record.latitude,
+              longitude: record.longitude,
+            }}
+            anchor={{ x: 0.5, y: 1 }}
+            onPress={() => {
+              setSelectedRecord(record);
+              setIsDetailModalVisible(true);
+            }}
+          >
+            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+              <MarkerPinIcon width={32} height={32} color="#000" />
+            </View>
+          </Marker>
+        ))}
       </MapView>
 
       {/* 지도 컨트롤용 리퀴드글래스 버튼들 */}
@@ -188,6 +223,15 @@ export const MapScreen = () => {
       {/* 개발 모드: 디버그 컨트롤 */}
       <MapDebugControls />
 
+      {/* 기록 상세정보 모달 */}
+      <RecordDetailModal
+        visible={isDetailModalVisible}
+        record={selectedRecord}
+        onClose={() => {
+          setIsDetailModalVisible(false);
+          setSelectedRecord(null);
+        }}
+      />
     </View>
   );
 };
