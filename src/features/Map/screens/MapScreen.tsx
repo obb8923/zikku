@@ -7,7 +7,7 @@ import { useTraceStore } from '@stores/traceStore';
 import { useRecordStore, Record } from '@stores/recordStore';
 import { MapDebugControls } from '../components/MapDebugControls';
 import { MapControls } from '../components/MapControls';
-import { RecordDetailModal } from '@components/index';
+import { RecordModal } from '@components/index';
 import { POLYLINE_STROKE_CONFIG, INITIAL_MAP_REGION, ZOOM_LEVEL, MARKER_SIZE_CONFIG } from '@/features/Map/constants/MAP';
 import { getPolylineStrokeWidth } from '../utils/polylineUtils';
 import { CHIP_TYPE } from '@constants/CHIP';
@@ -281,9 +281,10 @@ export const MapScreen = () => {
       {/* 개발 모드: 디버그 컨트롤 */}
       <MapDebugControls />
      
-      {/* 기록 상세정보 모달 */}
-      <RecordDetailModal
+      {/* 기록 상세 / 보기용 모달 (RecordModal 공용 사용) */}
+      <RecordModal
         visible={isDetailModalVisible}
+        mode="detail"
         record={selectedRecord}
         onClose={() => {
           setIsDetailModalVisible(false);

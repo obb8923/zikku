@@ -15,7 +15,7 @@ export const CHIP_TYPE = {
 export type ChipTypeKey = keyof typeof CHIP_TYPE;
 export type ChipType = typeof CHIP_TYPE[keyof typeof CHIP_TYPE];
 
-// 칩 타입별 아이콘 매핑
+// 칩 카테고리별 아이콘 매핑
 export const CHIP_ICONS = {
   [CHIP_TYPE.LANDSCAPE]: CloudIcon,
   [CHIP_TYPE.PLACE]: MarkerPinIcon,
@@ -24,7 +24,7 @@ export const CHIP_ICONS = {
   [CHIP_TYPE.TOGETHER]: UserMultipleIcon,
 } as const;
 
-// 칩 타입별 색상 매핑
+// 칩 카테고리별 색상 매핑
 export const CHIP_COLORS = {
   [CHIP_TYPE.LANDSCAPE]: '#23B6FF', // 하늘색
   [CHIP_TYPE.PLACE]: '#AA69FF', // 보라색
@@ -33,7 +33,7 @@ export const CHIP_COLORS = {
   [CHIP_TYPE.TOGETHER]: '#14DC6E', // 초록색
 } as const;
 
-// 칩 타입별 틴트 색상 매핑 (rgba, alpha: 0.22)
+// 칩 카테고리별 틴트 색상 매핑 (rgba, alpha: 0.22)
 export const CHIP_TINT_COLORS = {
   [CHIP_TYPE.LANDSCAPE]: 'rgba(35, 182, 255, 0.22)', // 하늘색
   [CHIP_TYPE.PLACE]: 'rgba(170, 105, 255, 0.22)', // 보라색

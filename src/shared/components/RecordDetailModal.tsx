@@ -1,14 +1,14 @@
 import React from 'react';
-import { View, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Image, ScrollView } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
 import { Portal } from '@gorhom/portal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DEVICE_HEIGHT } from '@constants/NORMAL';
 import { BUTTON_SIZE_MEDIUM } from '@constants/NORMAL';
 import { Record } from '@stores/recordStore';
-import { CHIP_TYPE, type ChipTypeKey } from '@constants/CHIP';
-import { Chip, LiquidGlassButton, LiquidGlassView, Text } from '@components/index';
+import { type ChipTypeKey } from '@constants/CHIP';
+import { Chip, LiquidGlassButton, LiquidGlassView, Text, LiquidGlassTextButton } from '@components/index';
 import PlusSmallIcon from '@assets/svgs/PlusSmall.svg';
-import { LiquidGlassTextButton } from './LiquidGlassTextButton';
 interface RecordDetailModalProps {
   visible: boolean;
   record: Record | null;
@@ -76,7 +76,10 @@ export const RecordDetailModal = ({ visible, record, onClose }: RecordDetailModa
                 </LiquidGlassButton>
               </View>
               {/* 더보기 버튼 */}
-              <LiquidGlassTextButton onPress={()=>{}} size="medium" text="더보기" />
+              <View className="flex-row gap-2">
+              <LiquidGlassTextButton onPress={()=>{}} size="medium" text="수정" />
+              <LiquidGlassTextButton onPress={()=>{}} size="medium" text="삭제" />
+              </View>
              
             </View>
             
@@ -101,7 +104,7 @@ export const RecordDetailModal = ({ visible, record, onClose }: RecordDetailModa
                 </View>
               )}
 
-              {/* 카테고리 영역 */}
+              {/* 카테고리 , 날짜 영역 */}
               <View className="flex-row w-full items-center gap-4 mb-4">
                 <Chip chipType={chipType} />
                 <Text 
@@ -141,16 +144,32 @@ export const RecordDetailModal = ({ visible, record, onClose }: RecordDetailModa
                   text="위치 정보"
                   style={{ marginBottom: 8, fontWeight: '600' }}
                 />
-                <Text 
-                  type="body3" 
-                  text={`위도: ${record.latitude.toFixed(6)}`}
-                  style={{ color: 'rgba(0, 0, 0, 0.7)', marginBottom: 4 }}
-                />
-                <Text 
-                  type="body3" 
-                  text={`경도: ${record.longitude.toFixed(6)}`}
-                  style={{ color: 'rgba(0, 0, 0, 0.7)' }}
-                />
+                <View
+                  style={{
+                    height: 200,
+                    borderRadius: 12,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <MapView
+                    style={{ flex: 1 }}
+                    pointerEvents="none"
+                    liteMode
+                    initialRegion={{
+                      latitude: record.latitude,
+                      longitude: record.longitude,
+                      latitudeDelta: 0.01,
+                      longitudeDelta: 0.01,
+                    }}
+                  >
+                    <Marker
+                      coordinate={{
+                        latitude: record.latitude,
+                        longitude: record.longitude,
+                      }}
+                    />
+                  </MapView>
+                </View>
               </LiquidGlassView>
             </ScrollView>
           </View>

@@ -5,7 +5,7 @@ import {BUTTON_SIZE_MEDIUM} from '@constants/NORMAL';
 import { CHIP_TYPE, CHIP_ICONS, CHIP_COLORS, type ChipTypeKey } from '@constants/CHIP';
 
 type ChipProps = {
-  chipType: ChipTypeKey;
+  chipType: ChipTypeKey | null;
   color?: string;
   tintColor?: string;
 };
@@ -33,6 +33,31 @@ const setColorAlpha = (color: string, alpha: number): string => {
 };
 
 export const Chip = ({ chipType, color, tintColor }: ChipProps) => {
+  // chipType이 null인 경우 (선택되지 않은 상태)
+  if (chipType === null) {
+    return (
+      <LiquidGlassView
+        borderRadius={BUTTON_SIZE_MEDIUM / 2}
+        tintColor={tintColor}
+        innerStyle={{
+          flexDirection: 'row',
+          height: BUTTON_SIZE_MEDIUM,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 16,
+          paddingVertical: 6,
+          alignSelf: 'flex-start',
+        }}
+      >
+        <Text 
+          type="body2" 
+          text="이 버튼을 눌러 카테고리를 선택해주세요" 
+          style={{ fontWeight: 500 }} 
+        />
+      </LiquidGlassView>
+    );
+  }
+
   // chipType에 따라 텍스트와 아이콘 가져오기
   const text = CHIP_TYPE[chipType];
   const chipTypeValue = CHIP_TYPE[chipType];

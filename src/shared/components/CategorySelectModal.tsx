@@ -1,9 +1,11 @@
-import React from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { TouchableOpacity, View, Animated } from 'react-native';
 import { Portal } from '@gorhom/portal';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CHIP_TYPE, type ChipTypeKey } from '@constants/CHIP';
 import { BUTTON_SIZE_MEDIUM } from '@constants/NORMAL';
 import { Chip, LiquidGlassButton, LiquidGlassView, Text } from '@components/index';
+import { COLORS } from '@constants/COLORS';
 
 interface CategorySelectModalProps {
   visible: boolean;
@@ -18,14 +20,51 @@ export const CategorySelectModal = ({
   onSelect,
   disabled = false,
 }: CategorySelectModalProps) => {
-  if (!visible) {
-    return null;
-  }
+  const insets = useSafeAreaInsets();
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      // 모달이 열릴 때: 아래에서 위로 슬라이드
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // 모달이 닫힐 때: 위에서 아래로 슬라이드
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, slideAnim, opacityAnim]);
 
   const handleSelect = (chipType: ChipTypeKey) => {
     onSelect(chipType);
     onClose();
   };
+
+  const translateY = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [300, 0], // 아래에서 위로 300px 이동
+  });
 
   return (
     <Portal>
@@ -34,22 +73,37 @@ export const CategorySelectModal = ({
         pointerEvents="box-none"
       >
         {/* 배경 오버레이 */}
-        <View
+        <Animated.View
           className="absolute inset-0"
-          style={{backgroundColor: 'rgba(0, 0, 0, 0.5)'}}
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            opacity: opacityAnim,
+          }}
           onTouchEnd={onClose}
         />
         {/* 모달 컨텐츠 */}
         <View
-          className="flex-1 items-center justify-center px-8"
+          className="flex-1 justify-end"
           pointerEvents="box-none"
         >
-          <View className="w-full bg-black p-4 rounded-2xl">
+          <Animated.View
+            className="w-full bg-component-background rounded-2xl p-4"
+            style={{
+              paddingBottom: insets.bottom + 16,
+              transform: [{ translateY }],
+              opacity: opacityAnim,
+            }}
+          >
+            <View className=" flex-row justify-between items-center mb-4">
             <Text
               type="title3"
               text="카테고리 선택"
-              style={{ marginBottom: 24, textAlign: 'left', color: 'white' }}
+              style={{textAlign: 'left', color: COLORS.TEXT_COMPONENT }}
             />
+            <TouchableOpacity onPress={onClose}>
+              <Text type="body2" text="닫기" style={{ color: COLORS.TEXT_COMPONENT }} />
+              </TouchableOpacity>
+            </View>
             <View className="flex-row flex-wrap gap-3">
               {(Object.keys(CHIP_TYPE) as ChipTypeKey[]).map((chipType) => (
                 <TouchableOpacity
@@ -61,7 +115,7 @@ export const CategorySelectModal = ({
                 </TouchableOpacity>
               ))}
             </View>
-          </View>
+          </Animated.View>
         </View>
       </View>
     </Portal>

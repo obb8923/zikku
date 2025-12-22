@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, ViewStyle, StyleProp } from 'react-native';
-import { LiquidGlassButton } from '@components/LiquidGlassButton';
+import {LiquidGlassContainerView} from '@callstack/liquid-glass';
+import { LiquidGlassButton} from '@components/LiquidGlassButton';
 import PlusSmall from '@assets/svgs/PlusSmall.svg';
 import MinusSmall from '@assets/svgs/MinusSmall.svg';
 import LocationUser from '@assets/svgs/LocationUser.svg';
@@ -23,7 +24,11 @@ export const MapControls = ({
   const defaultStyle: ViewStyle = { right: 16, top: insets.top + 16 };
   
   return (
-    <View className="absolute gap-2" style={containerStyle || defaultStyle}>
+    <LiquidGlassContainerView 
+    className="absolute" 
+    style={containerStyle || defaultStyle}
+    spacing={8}
+    >
       <LiquidGlassButton onPress={onZoomIn} borderRadius={8}>
         <PlusSmall width={24} height={24} color="black" />
       </LiquidGlassButton>
@@ -35,7 +40,7 @@ export const MapControls = ({
       <LiquidGlassButton onPress={onMoveToMyLocation} borderRadius={8}>
         <LocationUser width={24} height={24} color="black" />
       </LiquidGlassButton>
-    </View>
+    </LiquidGlassContainerView>
   );
 };
 

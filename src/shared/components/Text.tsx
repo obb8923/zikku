@@ -4,7 +4,6 @@ export type TypographyType =
   | 'title1' | 'title2' | 'title3' | 'title4'
   | 'body1' | 'body2' | 'body3' 
   | 'caption1'
-  | 'digit';
 
 export type TextProps = {
     text: string;
@@ -18,8 +17,6 @@ const NOTO_SANS_FONT_FAMILY = {
   medium: 'NotoSansKR-Medium',
   semibold: 'NotoSansKR-SemiBold',
 } as const;
-
-const DS_DIGIT_FONT_FAMILY = 'DS-DIGIT';
 
 const getTypographyStyle = (type: TypographyType): TextStyle => {
   switch(type){
@@ -78,13 +75,6 @@ const getTypographyStyle = (type: TypographyType): TextStyle => {
         fontSize: 12,
         lineHeight: 12 * 1.4,
         letterSpacing: -0.3,
-      };
-    case 'digit':
-      return {
-        fontFamily: DS_DIGIT_FONT_FAMILY,
-        fontSize: 18,
-        lineHeight: 18 * 1.2,
-        letterSpacing: 0,
       };
     default:
       return {

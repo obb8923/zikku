@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Image, Keyboard, ScrollView, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Image, Keyboard, ScrollView, Alert, ActivityIndicator, TouchableOpacity, Animated } from 'react-native';
 import { Portal } from '@gorhom/portal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapView, { Region, Marker } from 'react-native-maps';
 import { useLocationStore } from '@stores/locationStore';
 import { useAuthStore } from '@stores/authStore';
-import { useRecordStore } from '@stores/recordStore';
+import { useRecordStore, type Record as RecordType } from '@stores/recordStore';
 import { DEVICE_HEIGHT, DEVICE_WIDTH } from '@constants/NORMAL';
 import { BUTTON_SIZE_MEDIUM } from '@constants/NORMAL';
 import { INITIAL_MAP_REGION, ZOOM_LEVEL } from '@/features/Map/constants/MAP';
@@ -15,7 +15,7 @@ import { MapControls } from '@/features/Map/components/MapControls';
 import { saveRecord } from '@libs/supabase/recordService';
 import PlusSmallIcon from '@assets/svgs/PlusSmall.svg';
 import MarkerPinIcon from '@assets/svgs/MarkerPin.svg';
-
+import {LiquidGlassTextButton} from '@components/index';
 interface ImageData {
   uri: string;
   fileName?: string;
@@ -28,6 +28,13 @@ interface RecordModalProps {
   visible: boolean;
   onClose: () => void;
   image?: ImageData | null;
+  // mode: 기본(생성) / 상세 보기
+  mode?: 'create' | 'detail';
+  // 기존 레코드 상세 보기용 데이터
+  record?: RecordType | null;
+  // 상세 모드에서 수정/삭제 버튼 콜백
+  onEditPress?: (record: RecordType) => void;
+  onDeletePress?: (record: RecordType) => void;
 }
 
 // zoom 레벨을 delta로 변환하는 유틸리티 함수
@@ -37,16 +44,42 @@ const zoomToDelta = (zoom: number): { latitudeDelta: number; longitudeDelta: num
   return { latitudeDelta, longitudeDelta };
 };
 
-export const RecordModal = ({ visible, onClose, image }: RecordModalProps) => {
+// category(string)를 ChipTypeKey로 변환
+const getChipTypeFromCategory = (category: string | null | undefined): ChipTypeKey => {
+  if (!category) return 'LANDSCAPE';
+  const categoryMap: { [key: string]: ChipTypeKey } = {
+    '풍경': 'LANDSCAPE',
+    '장소': 'PLACE',
+    '생명': 'LIFE',
+    '발견': 'DISCOVERY',
+    '함께': 'TOGETHER',
+  };
+  return categoryMap[category] || 'LANDSCAPE';
+};
+
+export const RecordModal = ({
+  visible,
+  onClose,
+  image,
+  mode = 'create',
+  record,
+  onEditPress,
+  onDeletePress,
+}: RecordModalProps) => {
   const insets = useSafeAreaInsets();
   const [note, setNote] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<ChipTypeKey>('LANDSCAPE');
+  const [selectedCategory, setSelectedCategory] = useState<ChipTypeKey | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [mapRegion, setMapRegion] = useState<Region | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(ZOOM_LEVEL.DEFAULT);
   const [isSaving, setIsSaving] = useState(false);
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState<'photo' | 'location'>('photo');
   const mapRef = useRef<MapView>(null);
+  
+  // Fade 애니메이션 값
+  const photoTabOpacity = useRef(new Animated.Value(1)).current;
+  const locationTabOpacity = useRef(new Animated.Value(0)).current;
   
   // 현재 위치 가져오기
   const currentLatitude = useLocationStore(state => state.latitude);
@@ -56,7 +89,11 @@ export const RecordModal = ({ visible, onClose, image }: RecordModalProps) => {
   
   // 초기 위치 설정 (현재 위치 또는 기본 위치)
   useEffect(() => {
-    if (visible && !selectedLocation) {
+    // 상세 모드에서는 별도의 이펙트에서 record 기반으로 설정
+    if (!visible || selectedLocation || mode === 'detail') {
+      return;
+    }
+
       const initialLat = currentLatitude ?? INITIAL_MAP_REGION.latitude;
       const initialLng = currentLongitude ?? INITIAL_MAP_REGION.longitude;
       const { latitudeDelta, longitudeDelta } = zoomToDelta(ZOOM_LEVEL.DEFAULT);
@@ -68,8 +105,33 @@ export const RecordModal = ({ visible, onClose, image }: RecordModalProps) => {
         latitudeDelta,
         longitudeDelta,
       });
+  }, [visible, currentLatitude, currentLongitude, selectedLocation, mode]);
+
+  // 상세 모달일 때 record 기반으로 상태 초기화
+  useEffect(() => {
+    if (!visible || mode !== 'detail' || !record) {
+      return;
     }
-  }, [visible, currentLatitude, currentLongitude, selectedLocation]);
+
+    setNote(record.memo || '');
+    if (record.category) {
+      setSelectedCategory(getChipTypeFromCategory(record.category));
+    } else {
+      setSelectedCategory(null);
+    }
+
+    const { latitudeDelta, longitudeDelta } = zoomToDelta(ZOOM_LEVEL.DEFAULT);
+    setSelectedLocation({
+      latitude: record.latitude,
+      longitude: record.longitude,
+    });
+    setMapRegion({
+      latitude: record.latitude,
+      longitude: record.longitude,
+      latitudeDelta,
+      longitudeDelta,
+    });
+  }, [visible, mode, record]);
   
   // 지도 region 변경 핸들러 - 중앙 좌표 업데이트
   const handleRegionChangeComplete = useCallback((region: Region) => {
@@ -129,10 +191,62 @@ export const RecordModal = ({ visible, onClose, image }: RecordModalProps) => {
     });
   }, [currentLatitude, currentLongitude, mapRegion]);
   
+  // 탭 전환 핸들러
+  const handleTabChange = useCallback((tab: 'photo' | 'location') => {
+    if (tab === activeTab) return;
+    
+    setActiveTab(tab);
+    
+    // Fade 애니메이션
+    if (tab === 'photo') {
+      Animated.parallel([
+        Animated.timing(photoTabOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(locationTabOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(photoTabOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(locationTabOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [activeTab, photoTabOpacity, locationTabOpacity]);
+  
+  // 모달이 열릴 때 탭 초기화
+  useEffect(() => {
+    if (visible) {
+      setActiveTab('photo');
+      photoTabOpacity.setValue(1);
+      locationTabOpacity.setValue(0);
+      setSelectedCategory(null);
+    }
+  }, [visible, photoTabOpacity, locationTabOpacity]);
+  
   // 저장 핸들러
   const handleSave = useCallback(async () => {
+    // 생성(수정용) 모드에서만 사용
     if (!image?.uri) {
       Alert.alert('오류', '이미지가 필요합니다.');
+      return;
+    }
+    
+    if (!selectedCategory) {
+      Alert.alert('오류', '카테고리를 선택해주세요.');
       return;
     }
     
@@ -171,7 +285,7 @@ export const RecordModal = ({ visible, onClose, image }: RecordModalProps) => {
             onClose();
             // 상태 초기화
             setNote('');
-            setSelectedCategory('LANDSCAPE');
+            setSelectedCategory(null);
             setSelectedLocation(null);
             setMapRegion(null);
           },
@@ -185,9 +299,38 @@ export const RecordModal = ({ visible, onClose, image }: RecordModalProps) => {
     }
   }, [image, selectedLocation, selectedCategory, note, userId, onClose]);
 
+  // 상세 모드에서 수정 버튼
+  const handlePressEdit = useCallback(() => {
+    if (!record) {
+      return;
+    }
+    if (onEditPress) {
+      onEditPress(record);
+    } else {
+      Alert.alert('알림', '수정 기능은 아직 연결되지 않았습니다.');
+    }
+  }, [record, onEditPress]);
+
+  // 상세 모드에서 삭제 버튼
+  const handlePressDelete = useCallback(() => {
+    if (!record) {
+      return;
+    }
+    if (onDeletePress) {
+      onDeletePress(record);
+    } else {
+      Alert.alert('알림', '삭제 기능은 아직 연결되지 않았습니다.');
+    }
+  }, [record, onDeletePress]);
+
   if (!visible) {
     return null;
   }
+
+  const displayImageUri =
+    mode === 'detail'
+      ? record?.image_path ?? undefined
+      : image?.uri;
   
   return (
     <Portal>
@@ -211,135 +354,163 @@ export const RecordModal = ({ visible, onClose, image }: RecordModalProps) => {
           pointerEvents="box-none"
         >
           {/* 모달 컨텐츠 영역 */}
-          <View className="flex-1 px-8">
-            {/* 뒤로가기 버튼 , 메모 */}
-            <View className="flex-row  gap-2 w-full h-auto mb-2">
+          <View className="flex-1 px-8 relative">
+            {/* 뒤로가기 버튼 , 액티브 상태 버튼 */}
+            <View className="flex-row gap-2 w-full h-auto mb-2 justify-between">
               <View style={{ zIndex: 10, transform: [{rotate: '45deg'}], width: BUTTON_SIZE_MEDIUM, height: BUTTON_SIZE_MEDIUM }}>
                 <LiquidGlassButton onPress={onClose} size="medium">
                   <PlusSmallIcon width={24} height={24} color="black" />
                 </LiquidGlassButton>
+               
               </View>
-              <View className="flex-1">
+              <View className="flex-row gap-2">
+                  <LiquidGlassTextButton 
+                    onPress={() => handleTabChange('photo')} 
+                    size="medium" 
+                    text="사진과 카테고리"
+                    style={{ opacity: activeTab === 'photo' ? 1 : 0.5 }}
+                  />
+                  <LiquidGlassTextButton 
+                    onPress={() => handleTabChange('location')} 
+                    size="medium" 
+                    text="위치와 메모"
+                    style={{ opacity: activeTab === 'location' ? 1 : 0.5 }}
+                  />
+                </View>
+            
+            </View>
+            {/* 컨텐츠 영역 */}
+          <View className="flex-1 relative">
+            {/* 사진과 카테고리 탭 */}
+            <Animated.View 
+            className="absolute flex-1 inset-0 py-12 gap-8"
+              style={{ 
+                opacity: photoTabOpacity,
+                pointerEvents: activeTab === 'photo' ? 'auto' : 'none',
+              }}
+            >
+              {/* 이미지 영역 */}
+              {displayImageUri && (
+                <View className="flex-1 items-center justify-center">
+                  <Image
+                    source={{ uri: displayImageUri }}
+                    style={{ width: '100%', height: '100%'}}
+                    resizeMode="contain"
+                  />
+                </View>
+              )}
+            
+              {/* 칩 영역 */}
+              <View className="items-center justify-center w-full h-1/12 gap-8">
+            
+                <TouchableOpacity
+                  onPress={() => setIsCategoryModalVisible(true)}
+                  disabled={isSaving}
+                >
+                  <Chip chipType={selectedCategory}/>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+            
+            {/* 위치와 메모 탭 */}
+            <Animated.View 
+            className="flex-1 absolute inset-0"
+              style={{ 
+                opacity: locationTabOpacity,
+                pointerEvents: activeTab === 'location' ? 'auto' : 'none',
+              }}
+            > 
+            <View className="flex-1 justify-between py-12">
+            {/* 메모 입력 영역 */}
+            <View className="w-full mt-4 relative">
               <LiquidGlassInput
-                placeholder="메모(선택)"
                 value={note}
                 onChangeText={setNote}
+                placeholder="(선택) 메모를 입력할 수 있어요"
                 multiline
-                numberOfLines={1}
-                textAlignVertical="top"
-                returnKeyType="done"
-                onSubmitEditing={() => Keyboard.dismiss()}
+                numberOfLines={4}
+                maxLength={100}
+                style={{
+                  minHeight: 100,
+                  textAlignVertical: 'top',
+                }}
               />
-              </View>
-            </View>
-            <ScrollView 
-            showsVerticalScrollIndicator={false} 
-            bounces={false}
-            contentContainerStyle={{ paddingBottom: 16 }}>
-           
-            
-            {/* 이미지 영역 */}
-            {image?.uri && (
-              <View className="items-center justify-center">
-                <Image
-                  source={{ uri: image?.uri }}
-                  style={{
-                    borderRadius: 8,
-                    marginVertical: 16,
-                    width: '100%',
-                    height: DEVICE_HEIGHT * 0.3,
-                  }}
-                  resizeMode="contain"
+              <View className="absolute bottom-2 right-2">
+                <Text 
+                  type="caption1" 
+                  text={`${note.length}/100`}
+                  style={{ opacity: 0.6 }}
                 />
               </View>
-            )}
-          
-            {/* 칩 영역 */}
-            <View className="flex-row w-full h-1/12 gap-8">
-            <LiquidGlassView 
-            className=""
-            borderRadius={16}
-            style={{
-              borderTopLeftRadius: 16,
-              borderTopRightRadius: 16,
-              borderBottomLeftRadius: 0,
-              borderBottomRightRadius: 0,
-            }}
-            innerStyle={{ 
-              flex: 1,
-              justifyContent: 'center',
-              alignItems: 'center',
-              borderTopLeftRadius: 16,
-              borderTopRightRadius: 16,
-              borderBottomLeftRadius: 0,
-              borderBottomRightRadius: 0,
-              paddingHorizontal: 16,
-            }}>
-              <Text text="사진 위치" type="body2" style={{ textAlign: 'center' ,color: 'white' }} />
-            </LiquidGlassView>
-            <View className="flex-1 items-end justify-center mb-2">
-              <TouchableOpacity
-                onPress={() => setIsCategoryModalVisible(true)}
-                disabled={isSaving}
-              >
-                <Chip chipType={selectedCategory}/>
-                </TouchableOpacity>
             </View>
-            </View>
-            
-           
-             {/* 지도 영역 */}
-             {mapRegion && selectedLocation && (
-              <View className="w-full relative" style={{ height: DEVICE_HEIGHT * 0.3 }}>
-                <MapView
-                  ref={mapRef}
-                  style={{ width: '100%', height: '100%', borderRadius: 16 }}
-                  initialRegion={mapRegion}
-                  onRegionChangeComplete={handleRegionChangeComplete}
-                  showsUserLocation={false}
-                  showsMyLocationButton={false}
-                  scrollEnabled={true}
-                  zoomEnabled={true}
-                  pitchEnabled={false}
-                  rotateEnabled={false}
-                >
-                  <Marker
-                    coordinate={{
-                      latitude: selectedLocation.latitude,
-                      longitude: selectedLocation.longitude,
-                    }}
-                    anchor={{ x: 0.5, y: 1 }}
+              {/* 지도 영역 */}
+              {mapRegion && selectedLocation && (
+                <View className="w-full relative" style={{ borderRadius: 16, height: DEVICE_HEIGHT * 0.3, marginVertical: 16, overflow: 'hidden' }}>
+                  <MapView
+                    ref={mapRef}
+                    style={{ width: '100%', height: '100%' }}
+                    initialRegion={mapRegion}
+                    onRegionChangeComplete={handleRegionChangeComplete}
+                    showsUserLocation={false}
+                    showsMyLocationButton={false}
+                    scrollEnabled={true}
+                    zoomEnabled={true}
+                    pitchEnabled={false}
+                    rotateEnabled={false}
+                    mapType="mutedStandard"      // "standard" | "satellite" | "hybrid" | "mutedStandard"
+
                   >
-                    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-                      <Text type="body2" text="📍" />
-                    </View>
-                  </Marker>
-                </MapView>
-                {/* 지도 컨트롤 */}
-                <MapControls
-                  onZoomIn={handleZoomIn}
-                  onZoomOut={handleZoomOut}
-                  onMoveToMyLocation={handleMoveToMyLocation}
-                  containerStyle={{ right: 8, top: 8 }}
-                />
+                    <Marker
+                      coordinate={{
+                        latitude: selectedLocation.latitude,
+                        longitude: selectedLocation.longitude,
+                      }}
+                      anchor={{ x: 0.5, y: 1 }}
+                    >
+                      <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+                        <Text type="body2" text="📍" />
+                      </View>
+                    </Marker>
+                  </MapView>
+                  {/* 지도 컨트롤 */}
+                  <MapControls
+                    onZoomIn={handleZoomIn}
+                    onZoomOut={handleZoomOut}
+                    onMoveToMyLocation={handleMoveToMyLocation}
+                    containerStyle={{ right: 8, top: 8 }}
+                  />
+                </View>
+              )}
+              
               </View>
-            )}
-            </ScrollView>
+            </Animated.View>
+            </View>
              {/* 저장 버튼 */}
              <View className="w-full items-center justify-center">
-             <LiquidGlassButton
-              onPress={handleSave}
-              disabled={isSaving || !image?.uri || !selectedLocation}
-              borderRadius={16}
-            >
-              <View className="items-center justify-center">
-                {isSaving ? (
-                  <ActivityIndicator size="small" color="#000" />
-                ) : (
-                  <Text type="body1" text="저장" style={{ fontWeight: '500' }} />
-                )}
-              </View>
-            </LiquidGlassButton>
+              {mode === 'detail' && record ? (
+                <View className="flex-row gap-4">
+                  <LiquidGlassTextButton
+                    onPress={handlePressEdit}
+                    size="medium"
+                    text="수정"
+                    disabled={isSaving}
+                  />
+                  <LiquidGlassTextButton
+                    onPress={handlePressDelete}
+                    size="medium"
+                    text="삭제"
+                    disabled={isSaving}
+                  />
+                </View>
+              ) : (
+                <LiquidGlassTextButton
+                  onPress={handleSave}
+                  size="medium"
+                  text="저장하기"
+                  loading={isSaving}
+                  disabled={isSaving}
+                />
+              )}
             </View>
           </View>
         </View>

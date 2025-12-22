@@ -54,8 +54,8 @@ const MOCK_MORE_GROUPS: MoreGroup[] = [
       },
       {
         id: 'type',
-        title: '타입',
-        description: '지도/테마 타입을 선택해요',
+        title: '카테고리',
+        description: '지도/테마 카테고리를 선택해요',
       },
     ],
   },
@@ -208,7 +208,6 @@ export const MoreScreen = () => {
             data={MOCK_MORE_GROUPS}
             renderItem={renderItem}
             keyExtractor={(item) => item.id}
-            estimatedItemSize={120}
             contentContainerStyle={{
               paddingTop: BUTTON_SIZE_MEDIUM + 24,
               paddingBottom: insets.bottom + 24,
