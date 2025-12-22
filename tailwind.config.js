@@ -19,6 +19,7 @@ module.exports = {
         'primary': '#FF3900',
         'text': '#fafafa',
         'text-2': '#8d8d8d',
+        'text-component': '#a7a7a7',
       },
     },
   },

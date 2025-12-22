@@ -11,6 +11,8 @@ import { CHIP_TYPE, CHIP_TINT_COLORS, type ChipTypeKey } from '@constants/CHIP';
 import { Chip, LiquidGlassView } from '@components/index';
 import { DEVICE_HEIGHT } from '@constants/NORMAL';
 import { LiquidGlassImage } from '@components/index';
+import { COLORS } from '@constants/COLORS';
+import {BUTTON_SIZE_MEDIUM} from '@constants/NORMAL';
 type ListItem = {
   type: 'group';
   title: string;
@@ -19,7 +21,6 @@ type ListItem = {
 
 export const ArchiveScreen = () => {
   const navigation = useNavigation();
-  // Record store (로컬 스토어에서만 읽기)
   const records = useRecordStore(state => state.records);
   const [selectedRecord, setSelectedRecord] = React.useState<Record | null>(null);
   const [isDetailModalVisible, setIsDetailModalVisible] = React.useState(false);
@@ -71,14 +72,14 @@ export const ArchiveScreen = () => {
   // 아이템 렌더링
   const renderItem: ListRenderItem<ListItem> = ({ item }) => {
     return (
-      <View className="px-6 mb-4">
+      <View className="p-4 mb-4 bg-component-background rounded-3xl">
         {/* 헤더 */}
         <View className="mb-3">
-          <Text type="title3" text={item.title} style={{ fontWeight: '600' }} />
+          <Text type="title3" text={item.title} style={{ fontWeight: '600', color: COLORS.TEXT_COMPONENT }} />
         </View>
         
         {/* 같은 월의 기록들을 가로로 배치 (flex-wrap) */}
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+        <View className="flex-row flex-wrap gap-2">
           {item.records.map((record) => {
             const chipType = getChipTypeFromCategory(record.category);
             const chipTintColor = CHIP_TINT_COLORS[CHIP_TYPE[chipType]];
@@ -111,21 +112,24 @@ export const ArchiveScreen = () => {
     <Background type="white" isStatusBarGap>
       <View className="flex-1">
         <BackButton onPress={() => navigation.goBack()} />
-        <View className="px-6 pt-8 pb-4">
-          <Text type="title1" text="아카이브" />
-        </View>
-        
         {listData.length === 0 ? (
           <View className="flex-1 items-center justify-center">
             <Text type="body2" text="기록이 없습니다." style={{ color: 'rgba(0, 0, 0, 0.5)' }} />
           </View>
         ) : (
+          <View className="flex-1 px-6">
           <FlashList
             data={listData}
             renderItem={renderItem}
-            contentContainerStyle={{ paddingBottom: 16 }}
+            contentContainerStyle={{ paddingTop: BUTTON_SIZE_MEDIUM + 16, paddingBottom: 16 }}
             keyExtractor={(item) => `group-${item.title}`}
+            ListHeaderComponent={() => (
+              <View className="mb-4">
+                <Text type="title3" text="기억 저장소" style={{ fontWeight: '600', color: COLORS.TEXT_2 }} />
+              </View>
+            )}
           />
+          </View>
         )}
       </View>
 

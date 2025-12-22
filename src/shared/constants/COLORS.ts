@@ -7,4 +7,5 @@ export const COLORS = {
   PRIMARY: '#FF3900',
   TEXT: '#fafafa',
   TEXT_2: '#8d8d8d',
+  TEXT_COMPONENT: '#a7a7a7',
 };
