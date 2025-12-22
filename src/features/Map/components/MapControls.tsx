@@ -23,7 +23,7 @@ export const MapControls = ({
   const defaultStyle: ViewStyle = { right: 16, top: insets.top + 16 };
   
   return (
-    <View className="absolute gap-2" style={containerStyle || defaultStyle}>
+    <View className="absolute gap-1" style={containerStyle || defaultStyle}>
    
       <LiquidGlassButton onPress={onZoomIn} borderRadius={8}>
         <PlusSmall width={24} height={24} color="black" />
