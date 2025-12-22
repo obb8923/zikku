@@ -23,7 +23,7 @@ export const LiquidGlassImage = ({ source, tintColor = "rgba(255,255,255)"}: Liq
             width,
             height,
           position: 'absolute',
-          opacity: 0.5
+          opacity: 0.77
         }}
         innerStyle={{
             width,

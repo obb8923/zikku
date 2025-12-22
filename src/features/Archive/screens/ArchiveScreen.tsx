@@ -11,9 +11,11 @@ import { CHIP_TYPE, CHIP_TINT_COLORS, type ChipTypeKey } from '@constants/CHIP';
 import { Chip, LiquidGlassView } from '@components/index';
 import { DEVICE_HEIGHT } from '@constants/NORMAL';
 import { LiquidGlassImage } from '@components/index';
-type ListItem = 
-  | { type: 'header'; title: string }
-  | { type: 'record'; record: Record };
+type ListItem = {
+  type: 'group';
+  title: string;
+  records: Record[];
+};
 
 export const ArchiveScreen = () => {
   const navigation = useNavigation();
@@ -22,7 +24,7 @@ export const ArchiveScreen = () => {
   const [selectedRecord, setSelectedRecord] = React.useState<Record | null>(null);
   const [isDetailModalVisible, setIsDetailModalVisible] = React.useState(false);
 
-  // records를 월별로 그룹화하여 평면화된 리스트 아이템으로 변환
+  // records를 월별로 그룹화하여 리스트 아이템으로 변환
   const listData = useMemo(() => {
     const groups: { [key: string]: Record[] } = {};
     
@@ -43,16 +45,14 @@ export const ArchiveScreen = () => {
       return dateB.getTime() - dateA.getTime();
     });
 
-    // 평면화된 리스트 데이터 생성
-    const flatData: ListItem[] = [];
-    sortedKeys.forEach(key => {
-      flatData.push({ type: 'header', title: key });
-      groups[key].forEach(record => {
-        flatData.push({ type: 'record', record });
-      });
-    });
+    // 그룹화된 리스트 데이터 생성
+    const groupData: ListItem[] = sortedKeys.map(key => ({
+      type: 'group' as const,
+      title: key,
+      records: groups[key],
+    }));
 
-    return flatData;
+    return groupData;
   }, [records]);
 
   // category를 ChipTypeKey로 변환
@@ -70,34 +70,40 @@ export const ArchiveScreen = () => {
 
   // 아이템 렌더링
   const renderItem: ListRenderItem<ListItem> = ({ item }) => {
-    if (item.type === 'header') {
-      return (
-        <View className="px-6 py-3 bg-transparent">
+    return (
+      <View className="px-6 mb-4">
+        {/* 헤더 */}
+        <View className="mb-3">
           <Text type="title3" text={item.title} style={{ fontWeight: '600' }} />
         </View>
-      );
-    }
+        
+        {/* 같은 월의 기록들을 가로로 배치 (flex-wrap) */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+          {item.records.map((record) => {
+            const chipType = getChipTypeFromCategory(record.category);
+            const chipTintColor = CHIP_TINT_COLORS[CHIP_TYPE[chipType]];
 
-    const record = item.record;
-    const chipType = getChipTypeFromCategory(record.category);
-    const chipTintColor = CHIP_TINT_COLORS[CHIP_TYPE[chipType]];
-
-    return (
-      <TouchableOpacity
-        onPress={() => {
-          setSelectedRecord(record);
-          setIsDetailModalVisible(true);
-        }}
-        className="px-6 mb-3"
-      >
-            {/* 이미지 */}
-            {record.image_path && (
-              <LiquidGlassImage 
-                source={record.image_path} 
-                tintColor={chipTintColor}
-              />
-            )}
-      </TouchableOpacity>
+            return (
+              <TouchableOpacity
+                key={record.id}
+                onPress={() => {
+                  setSelectedRecord(record);
+                  setIsDetailModalVisible(true);
+                }}
+                style={{ marginBottom: 12 }}
+              >
+                {/* 이미지 */}
+                {record.image_path && (
+                  <LiquidGlassImage 
+                    source={record.image_path} 
+                    tintColor={chipTintColor}
+                  />
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
     );
   };
 
@@ -118,13 +124,7 @@ export const ArchiveScreen = () => {
             data={listData}
             renderItem={renderItem}
             contentContainerStyle={{ paddingBottom: 16 }}
-            getItemType={(item) => item.type}
-            keyExtractor={(item, index) => {
-              if (item.type === 'header') {
-                return `header-${item.title}`;
-              }
-              return `record-${item.record.id}`;
-            }}
+            keyExtractor={(item) => `group-${item.title}`}
           />
         )}
       </View>

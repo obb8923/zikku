@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { View, Image } from 'react-native';
 import { usePermissionStore } from '@stores/permissionStore';
 import MapView, { Region, Polyline, Marker } from 'react-native-maps';
 import { useLocationStore } from '@stores/locationStore';
@@ -8,16 +8,69 @@ import { useRecordStore, Record } from '@stores/recordStore';
 import { MapDebugControls } from '../componentes/MapDebugControls';
 import { MapControls } from '../components/MapControls';
 import { RecordDetailModal,LiquidGlassView } from '@components/index';
-import { POLYLINE_STROKE_CONFIG, INITIAL_MAP_REGION, ZOOM_LEVEL } from '@/features/Map/constants/MAP';
+import { POLYLINE_STROKE_CONFIG, INITIAL_MAP_REGION, ZOOM_LEVEL, MARKER_SIZE_CONFIG } from '@/features/Map/constants/MAP';
 import { getPolylineStrokeWidth } from '../utils/polylineUtils';
 import MarkerPinIcon from '@assets/svgs/MarkerPin.svg';
-
+import { LinearGradient } from 'react-native-linear-gradient';
+import { CHIP_TYPE } from '@constants/CHIP';
 
 // zoom 레벨을 delta로 변환하는 유틸리티 함수
 const zoomToDelta = (zoom: number): { latitudeDelta: number; longitudeDelta: number } => {
   const latitudeDelta = 360 / Math.pow(2, zoom);
   const longitudeDelta = latitudeDelta; 
   return { latitudeDelta, longitudeDelta };
+};
+
+// delta를 zoom 레벨로 변환하는 유틸리티 함수
+const deltaToZoom = (latitudeDelta: number): number => {
+  return Math.log2(360 / latitudeDelta);
+};
+
+// 카테고리별 마커 이미지 매핑
+const getMarkerImage = (category: string | null | undefined) => {
+  switch (category) {
+    case CHIP_TYPE.LANDSCAPE:
+      return require('../../../../assets/pngs/blue.png');
+    case CHIP_TYPE.PLACE:
+      return require('../../../../assets/pngs/purple.png');
+    case CHIP_TYPE.LIFE:
+      return require('../../../../assets/pngs/red.png');
+    case CHIP_TYPE.DISCOVERY:
+      return require('../../../../assets/pngs/orange.png');
+    case CHIP_TYPE.TOGETHER:
+      return require('../../../../assets/pngs/green.png');
+    default:
+      return require('../../../../assets/pngs/blue.png'); // 기본값
+  }
+};
+
+// 줌 레벨에 따른 마커 크기 계산
+// - 지도를 확대하면 (보이는 영역이 좁아짐, latitudeDelta가 작음) → 마커가 커짐 (MAX_SIZE)
+// - 지도를 축소하면 (보이는 영역이 넓어짐, latitudeDelta가 큼) → 마커가 작아짐 (MIN_SIZE)
+const getMarkerSize = (region: Region | null): number => {
+  if (!region) {
+    return MARKER_SIZE_CONFIG.DEFAULT_SIZE;
+  }
+
+  const latitudeDelta = region.latitudeDelta;
+  
+  // 범위 제한
+  const clampedDelta = Math.max(
+    MARKER_SIZE_CONFIG.MIN_DELTA,
+    Math.min(MARKER_SIZE_CONFIG.MAX_DELTA, latitudeDelta)
+  );
+  
+  // 선형 보간
+  // latitudeDelta가 작을수록 (확대) ratio가 0에 가까워지고, size는 MAX_SIZE에 가까워짐
+  // latitudeDelta가 클수록 (축소) ratio가 1에 가까워지고, size는 MIN_SIZE에 가까워짐
+  const ratio =
+    (clampedDelta - MARKER_SIZE_CONFIG.MIN_DELTA) /
+    (MARKER_SIZE_CONFIG.MAX_DELTA - MARKER_SIZE_CONFIG.MIN_DELTA);
+  const size =
+    MARKER_SIZE_CONFIG.MAX_SIZE -
+    (MARKER_SIZE_CONFIG.MAX_SIZE - MARKER_SIZE_CONFIG.MIN_SIZE) * ratio;
+  
+  return Math.round(size);
 };
 
 export const MapScreen = () => {
@@ -75,6 +128,10 @@ export const MapScreen = () => {
   // 지도 region 변경 핸들러
   const handleRegionChangeComplete = useCallback((region: Region) => {
     setCurrentRegion(region);
+    // zoom 레벨도 업데이트 (마커 크기 계산을 위해)
+    const calculatedZoom = deltaToZoom(region.latitudeDelta);
+    const clampedZoom = Math.min(ZOOM_LEVEL.MAX, Math.max(ZOOM_LEVEL.MIN, calculatedZoom));
+    setZoomLevel(clampedZoom);
   }, []);
 
   
@@ -146,6 +203,28 @@ export const MapScreen = () => {
 
   return (
     <View className="flex-1">
+       {/* 하단 그라데이션 오버레이 */}
+       <LinearGradient
+        colors={[
+          'rgba(0, 0, 0, 0)',       // 완전 투명
+          'rgba(0, 0, 0, 0.05)',     // 약간 투명
+          'rgba(0, 0, 0, 0.15)',     // 중간 투명도
+          'rgba(0, 0, 0, 0.25)'      // 진한 투명도
+        ]}
+        locations={[0, 0.2, 0.7, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 1000,
+          height: '30%',
+          width: '100%',
+          pointerEvents: 'none',
+        }}
+      />
      <MapView
         style={{ flex: 1 }}
         ref={mapRef}
@@ -183,24 +262,36 @@ export const MapScreen = () => {
         })}
         
         {/* Records 마커 표시 */}
-        {records.map((record) => (
-          <Marker
-            key={record.id}
-            coordinate={{
-              latitude: record.latitude,
-              longitude: record.longitude,
-            }}
-            anchor={{ x: 0.5, y: 1 }}
-            onPress={() => {
-              setSelectedRecord(record);
-              setIsDetailModalVisible(true);
-            }}
-          >
-            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-              <MarkerPinIcon width={32} height={32} color="#000" />
-            </View>
-          </Marker>
-        ))}
+        {records.map((record) => {
+          const markerSize = getMarkerSize(currentRegion);
+          return (
+            <Marker
+              key={record.id}
+              coordinate={{
+                latitude: record.latitude,
+                longitude: record.longitude,
+              }}
+              anchor={{ x: 0.5, y: 1 }}
+              onPress={() => {
+                setSelectedRecord(record);
+                setIsDetailModalVisible(true);
+              }}
+            >
+              <View 
+                style={{ 
+                  width: markerSize, 
+                  height: markerSize,
+                }}
+              >
+                <Image
+                  source={getMarkerImage(record.category)}
+                  style={{ width: markerSize, height: markerSize }}
+                  resizeMode="contain"
+                />
+              </View>
+            </Marker>
+          );
+        })}
       </MapView>
 
       {/* 지도 컨트롤용 리퀴드글래스 버튼들 */}
@@ -209,14 +300,9 @@ export const MapScreen = () => {
         onZoomOut={handleZoomOut}
         onMoveToMyLocation={handleMoveToMyLocationWithFixedZoom}
       />
-      <LiquidGlassView
-      style={{position: 'absolute', left: 100, top: 200}}
-      innerStyle={{width:100, height:100, borderRadius: 999,opacity: 0.5}}
-      effect="clear"
-      ></LiquidGlassView>
       {/* 개발 모드: 디버그 컨트롤 */}
       <MapDebugControls />
-
+     
       {/* 기록 상세정보 모달 */}
       <RecordDetailModal
         visible={isDetailModalVisible}
@@ -226,6 +312,7 @@ export const MapScreen = () => {
           setSelectedRecord(null);
         }}
       />
+     
     </View>
   );
 };
