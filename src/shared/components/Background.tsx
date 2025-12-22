@@ -13,7 +13,7 @@ type BackgroundProps = {
 export const Background = ({children,isStatusBarGap=false,type='green',isTabBarGap=true,...props}: BackgroundProps) => {
   const insets = useSafeAreaInsets();
   return (
-    <View className="flex-1">
+    <View className="flex-1 bg-background">
     <View 
     className={`flex-1 ${props.className}`} 
     style={[{paddingTop: isStatusBarGap ? insets.top : 0,paddingBottom: isTabBarGap?TAB_BAR_HEIGHT:insets.bottom}, props.style]}>

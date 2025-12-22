@@ -32,9 +32,6 @@ const Tab = createBottomTabNavigator<AppTabParamList>();
 
 const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
   const isMapTabActive = state.routes[state.index]?.name === TAB_NAME.MAP;
-  if (!isMapTabActive) {
-    return null;
-  }
 
   const archiveAndMoreRoutes = state.routes.filter(
     (route) =>
@@ -154,6 +151,7 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
   }, [isFabOpen, openFab, closeFab]);
   return (
     <View 
+    pointerEvents={isMapTabActive ? 'auto' : 'none'}
     style={{
       position: 'absolute',
       bottom: insets.bottom + 10,
@@ -161,6 +159,7 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
       alignItems: 'center',
       backgroundColor: 'transparent', 
       paddingHorizontal: 16,
+      opacity: isMapTabActive ? 1 : 0,
     }}
     >
       {/* 왼쪽: 탭들 (아이콘만, flex-1) */}
