@@ -14,7 +14,7 @@ import MapIcon from '@assets/svgs/Map.svg';
 import ArchiveIcon from '@assets/svgs/Archive.svg';
 import MoreIcon from '@assets/svgs/More.svg';
 import { LiquidGlassButton } from '@components/LiquidGlassButton';
-import PlusSmall from '@assets/svgs/PlusSmall.svg';
+import AddIcon from '@assets/svgs/Add.svg';
 import CameraIcon from '@assets/svgs/Camera.svg';
 import ImageIcon from '@assets/svgs/Image.svg';
 import {LiquidGlassView} from '@components/LiquidGlassView';
@@ -22,6 +22,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import { launchCamera, launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
 import { usePermissionStore } from '@stores/permissionStore';
 import { RecordModal } from '@components/RecordModal';
+import {COLORS} from '@constants/COLORS';
 export type AppTabParamList = {
   [TAB_NAME.MAP]: undefined;
   [TAB_NAME.ARCHIVE]: undefined;
@@ -271,7 +272,7 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
           onPress={handlePressMainFab}
           size="large"
         >
-          <PlusSmall width={24} height={24} color="black" />
+          <AddIcon width={24} height={24} color={COLORS.TEXT} />
         </LiquidGlassButton>
       </Animated.View>
 

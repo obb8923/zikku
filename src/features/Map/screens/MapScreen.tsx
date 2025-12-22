@@ -5,15 +5,13 @@ import MapView, { Region, Polyline, Marker } from 'react-native-maps';
 import { useLocationStore } from '@stores/locationStore';
 import { useTraceStore } from '@stores/traceStore';
 import { useRecordStore, Record } from '@stores/recordStore';
-import { MapDebugControls } from '../componentes/MapDebugControls';
+import { MapDebugControls } from '../components/MapDebugControls';
 import { MapControls } from '../components/MapControls';
-import { RecordDetailModal,LiquidGlassView } from '@components/index';
+import { RecordDetailModal } from '@components/index';
 import { POLYLINE_STROKE_CONFIG, INITIAL_MAP_REGION, ZOOM_LEVEL, MARKER_SIZE_CONFIG } from '@/features/Map/constants/MAP';
 import { getPolylineStrokeWidth } from '../utils/polylineUtils';
-import MarkerPinIcon from '@assets/svgs/MarkerPin.svg';
-import { LinearGradient } from 'react-native-linear-gradient';
 import { CHIP_TYPE } from '@constants/CHIP';
-
+import { GradientMask } from '../components/GradientMask';
 // zoom 레벨을 delta로 변환하는 유틸리티 함수
 const zoomToDelta = (zoom: number): { latitudeDelta: number; longitudeDelta: number } => {
   const latitudeDelta = 360 / Math.pow(2, zoom);
@@ -203,30 +201,10 @@ export const MapScreen = () => {
 
   return (
     <View className="flex-1">
-       {/* 하단 그라데이션 오버레이 */}
-       <LinearGradient
-        colors={[
-          'rgba(0, 0, 0, 0)',       // 완전 투명
-          'rgba(0, 0, 0, 0.05)',     // 약간 투명
-          'rgba(0, 0, 0, 0.15)',     // 중간 투명도
-          'rgba(0, 0, 0, 0.25)'      // 진한 투명도
-        ]}
-        locations={[0, 0.2, 0.7, 1]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 1000,
-          height: '30%',
-          width: '100%',
-          pointerEvents: 'none',
-        }}
-      />
+      <GradientMask />
      <MapView
         style={{ flex: 1 }}
+        mapType="mutedStandard"      // "standard" | "satellite" | "hybrid" | "mutedStandard"
         ref={mapRef}
         showsUserLocation={locationPermission}
         initialRegion={(() => {

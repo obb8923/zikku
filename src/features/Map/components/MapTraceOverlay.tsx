@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { Canvas, Path, Skia } from '@shopify/react-native-skia';
 import { Region } from 'react-native-maps';
-import { Trace } from '@/stores/traceStore';
+import { Trace } from '@stores/traceStore';
 import { latLngArrayToScreen } from '@utils/coordinateTransform';
 
 interface MapTraceOverlayProps {

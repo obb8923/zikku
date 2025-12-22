@@ -11,7 +11,9 @@ import { Chip } from "./Chip";
 import { Note } from "./Note";
 import { CategorySelectModal } from "./CategorySelectModal";
 import { LiquidGlassImage } from "./LiquidGlassImage";
+import { LiquidGlassTextButton } from "./LiquidGlassTextButton";
 export {
+  LiquidGlassTextButton,
   Background,
   Text,
   FloatingActionButton,

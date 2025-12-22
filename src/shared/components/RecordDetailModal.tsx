@@ -8,7 +8,7 @@ import { Record } from '@stores/recordStore';
 import { CHIP_TYPE, type ChipTypeKey } from '@constants/CHIP';
 import { Chip, LiquidGlassButton, LiquidGlassView, Text } from '@components/index';
 import PlusSmallIcon from '@assets/svgs/PlusSmall.svg';
-
+import { LiquidGlassTextButton } from './LiquidGlassTextButton';
 interface RecordDetailModalProps {
   visible: boolean;
   record: Record | null;
@@ -67,13 +67,17 @@ export const RecordDetailModal = ({ visible, record, onClose }: RecordDetailModa
         >
           {/* 모달 컨텐츠 영역 */}
           <View className="flex-1 px-8">
-            {/* 뒤로가기 버튼 */}
-            <View className="flex-row w-full h-auto mb-2 justify-end">
-              <View style={{ zIndex: 10, transform: [{rotate: '45deg'}], width: BUTTON_SIZE_MEDIUM, height: BUTTON_SIZE_MEDIUM }}>
+            {/* 모달 닫기 버튼, 더보기 버튼 */}
+            <View className="flex-row w-full h-auto mb-2 justify-between">
+              {/* 모달 닫기 버튼 */}
+            <View style={{ zIndex: 10, transform: [{rotate: '45deg'}], width: BUTTON_SIZE_MEDIUM, height: BUTTON_SIZE_MEDIUM }}>
                 <LiquidGlassButton onPress={onClose} size="medium">
                   <PlusSmallIcon width={24} height={24} color="black" />
                 </LiquidGlassButton>
               </View>
+              {/* 더보기 버튼 */}
+              <LiquidGlassTextButton onPress={()=>{}} size="medium" text="더보기" />
+             
             </View>
             
             <ScrollView 
@@ -87,7 +91,7 @@ export const RecordDetailModal = ({ visible, record, onClose }: RecordDetailModa
                   <Image
                     source={{ uri: record.image_path }}
                     style={{
-                      borderRadius: 8,
+                      borderRadius: 16,
                       marginVertical: 16,
                       width: '100%',
                       height: DEVICE_HEIGHT * 0.3,
