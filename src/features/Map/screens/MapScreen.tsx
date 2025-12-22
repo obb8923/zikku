@@ -7,12 +7,10 @@ import { useTraceStore } from '@stores/traceStore';
 import { useRecordStore, Record } from '@stores/recordStore';
 import { MapDebugControls } from '../componentes/MapDebugControls';
 import { MapControls } from '../components/MapControls';
-import { RecordDetailModal } from '@components/index';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { RecordDetailModal,LiquidGlassView } from '@components/index';
 import { POLYLINE_STROKE_CONFIG, INITIAL_MAP_REGION, ZOOM_LEVEL } from '@/features/Map/constants/MAP';
 import { getPolylineStrokeWidth } from '../utils/polylineUtils';
 import MarkerPinIcon from '@assets/svgs/MarkerPin.svg';
-
 
 
 // zoom 레벨을 delta로 변환하는 유틸리티 함수
@@ -31,7 +29,6 @@ export const MapScreen = () => {
   const latitude = useLocationStore(state => state.latitude);
   const longitude = useLocationStore(state => state.longitude);
   const fetchLocation = useLocationStore(state => state.fetchLocation);
-  const insets = useSafeAreaInsets();
   // Trace store
   const traces = useTraceStore(state => state.traces);
   const startTracking = useTraceStore(state => state.startTracking);
@@ -212,7 +209,11 @@ export const MapScreen = () => {
         onZoomOut={handleZoomOut}
         onMoveToMyLocation={handleMoveToMyLocationWithFixedZoom}
       />
-
+      <LiquidGlassView
+      style={{position: 'absolute', left: 100, top: 200}}
+      innerStyle={{width:100, height:100, borderRadius: 999,opacity: 0.5}}
+      effect="clear"
+      ></LiquidGlassView>
       {/* 개발 모드: 디버그 컨트롤 */}
       <MapDebugControls />
 

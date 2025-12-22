@@ -33,3 +33,12 @@ export const CHIP_COLORS = {
   [CHIP_TYPE.TOGETHER]: '#14DC6E', // 초록색
 } as const;
 
+// 칩 타입별 틴트 색상 매핑 (rgba, alpha: 0.22)
+export const CHIP_TINT_COLORS = {
+  [CHIP_TYPE.LANDSCAPE]: 'rgba(35, 182, 255, 0.22)', // 하늘색
+  [CHIP_TYPE.PLACE]: 'rgba(170, 105, 255, 0.22)', // 보라색
+  [CHIP_TYPE.LIFE]: 'rgba(255, 108, 135, 0.22)', // 빨간색
+  [CHIP_TYPE.DISCOVERY]: 'rgba(255, 176, 57, 0.22)', // 주황색
+  [CHIP_TYPE.TOGETHER]: 'rgba(20, 220, 110, 0.22)', // 초록색
+} as const;
+

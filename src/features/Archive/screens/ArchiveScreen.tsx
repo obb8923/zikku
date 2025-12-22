@@ -7,10 +7,10 @@ import { Text } from '@components/Text';
 import { BackButton } from '@components/BackButton';
 import { useRecordStore, Record } from '@stores/recordStore';
 import { RecordDetailModal } from '@components/index';
-import { CHIP_TYPE, type ChipTypeKey } from '@constants/CHIP';
+import { CHIP_TYPE, CHIP_TINT_COLORS, type ChipTypeKey } from '@constants/CHIP';
 import { Chip, LiquidGlassView } from '@components/index';
 import { DEVICE_HEIGHT } from '@constants/NORMAL';
-
+import { LiquidGlassImage } from '@components/index';
 type ListItem = 
   | { type: 'header'; title: string }
   | { type: 'record'; record: Record };
@@ -80,12 +80,7 @@ export const ArchiveScreen = () => {
 
     const record = item.record;
     const chipType = getChipTypeFromCategory(record.category);
-    const formattedDate = new Date(record.created_at).toLocaleString('ko-KR', {
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    const chipTintColor = CHIP_TINT_COLORS[CHIP_TYPE[chipType]];
 
     return (
       <TouchableOpacity
@@ -95,49 +90,13 @@ export const ArchiveScreen = () => {
         }}
         className="px-6 mb-3"
       >
-        <LiquidGlassView
-          borderRadius={16}
-          className="w-full"
-          innerStyle={{
-            padding: 16,
-          }}
-        >
-          <View className="flex-row gap-4">
             {/* 이미지 */}
             {record.image_path && (
-              <Image
-                source={{ uri: record.image_path }}
-                style={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: 8,
-                }}
-                resizeMode="cover"
+              <LiquidGlassImage 
+                source={record.image_path} 
+                tintColor={chipTintColor}
               />
             )}
-            
-            {/* 정보 영역 */}
-            <View className="flex-1">
-              <View className="flex-row items-center gap-2 mb-2">
-                <Chip chipType={chipType} />
-                <Text 
-                  type="caption1" 
-                  text={formattedDate}
-                  style={{ color: 'rgba(0, 0, 0, 0.5)' }}
-                />
-              </View>
-              
-              {record.memo && (
-                <Text 
-                  type="body3" 
-                  text={record.memo}
-                  numberOfLines={2}
-                  style={{ color: '#000' }}
-                />
-              )}
-            </View>
-          </View>
-        </LiquidGlassView>
       </TouchableOpacity>
     );
   };

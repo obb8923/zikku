@@ -7,3 +7,7 @@ export const DEVICE_WIDTH = Dimensions.get('window').width;
 export const BUTTON_SIZE_SMALL = 32;
 export const BUTTON_SIZE_MEDIUM = 44;
 export const BUTTON_SIZE_LARGE = 56;
+export const BUTTON_SIZE_XLARGE = 64;
+export const BUTTON_SIZE_XXLARGE = 72;
+
+

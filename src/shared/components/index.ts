@@ -10,7 +10,7 @@ import { BackButton } from "./BackButton";
 import { Chip } from "./Chip";
 import { Note } from "./Note";
 import { CategorySelectModal } from "./CategorySelectModal";
-
+import { LiquidGlassImage } from "./LiquidGlassImage";
 export {
   Background,
   Text,
@@ -24,4 +24,5 @@ export {
   Chip,
   Note,
   CategorySelectModal,
+  LiquidGlassImage,
 };
