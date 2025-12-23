@@ -174,6 +174,7 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
         marginRight: 16,
         height: 56,
        }}
+       tintColor="rgba(255,255,255,0)"
       >
         {archiveAndMoreRoutes.map((route, index) => {
           const isFocused = state.index === state.routes.indexOf(route);
