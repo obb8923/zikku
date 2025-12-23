@@ -13,6 +13,7 @@ export type LiquidGlassButtonProps = {
   borderRadius?: number;
   children?: React.ReactNode;
   size?:'small' | 'medium' | 'large';
+  tintColor?: string;
 };
 export const LiquidGlassButton = ({
   onPress,
@@ -20,6 +21,7 @@ export const LiquidGlassButton = ({
   borderRadius = 999,
   children,
   size = 'medium',
+  tintColor = 'rgba(255,255,255,0)',
 }: LiquidGlassButtonProps) => {
   const sizeStyle = {
     small: {width: BUTTON_SIZE_SMALL, height: BUTTON_SIZE_SMALL},
@@ -30,6 +32,7 @@ export const LiquidGlassButton = ({
     <LiquidGlassView
       borderRadius={borderRadius}
       interactive={!disabled}
+      tintColor={tintColor}
     >
       <Pressable
         onPress={onPress}
