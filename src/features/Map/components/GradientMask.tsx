@@ -7,8 +7,8 @@ export const GradientMask = () => {
     <LinearGradient
     colors={[
         'rgba(0, 0, 0, 0.9)' ,     // 진한 투명도
-        'rgba(0, 0, 0, 0.5)',     // 중간 투명도
-        'rgba(0, 0, 0, 0.2)',     // 약간 투명
+        'rgba(0, 0, 0, 0.7)',     // 중간 투명도
+        'rgba(0, 0, 0, 0.3)',     // 약간 투명
         'rgba(0, 0, 0, 0.1)',       // 완전 투명
     ]}
     locations={[0, 0.2, 0.7, 1]}
@@ -29,8 +29,8 @@ export const GradientMask = () => {
         <LinearGradient
         colors={[
           'rgba(0, 0, 0, 0.1)',       // 완전 투명
-          'rgba(0, 0, 0, 0.2)',     // 약간 투명
-          'rgba(0, 0, 0, 0.5)',     // 중간 투명도
+          'rgba(0, 0, 0, 0.3)',     // 약간 투명
+          'rgba(0, 0, 0, 0.7)',     // 중간 투명도
           'rgba(0, 0, 0, 0.9)'      // 진한 투명도
         ]}
         locations={[0, 0.2, 0.7, 1]}

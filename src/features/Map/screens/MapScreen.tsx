@@ -81,6 +81,8 @@ export const MapScreen = () => {
   // 애니메이션 값들
   const initialScreenOpacity = useRef(new Animated.Value(1)).current;
   const controlsOpacity = useRef(new Animated.Value(0)).current;
+  // 초기 위치로 설정했는지 추적하는 ref
+  const hasMovedToInitialLocation = useRef(false);
 
   // 화면 진입 시 위치 권한 요청 및 현재 위치 가져오기
   useEffect(() => {
@@ -127,18 +129,26 @@ export const MapScreen = () => {
     }
   }, [hasStarted, initialScreenOpacity, controlsOpacity]);
 
-  // 초기 region 설정 (currentRegion이 없을 때만)
+  // 내 현재 위치로 지도 region 설정 (초기 위치 로드 시 한 번만 실행)
   useEffect(() => {
-    if (!currentRegion && latitude && longitude) {
-      const { latitudeDelta, longitudeDelta } = zoomToDelta(zoomLevel);
+    if (
+      latitude &&
+      longitude &&
+      !hasMovedToInitialLocation.current
+    ) {
+      const { latitudeDelta, longitudeDelta } = zoomToDelta(ZOOM_LEVEL.DEFAULT);
+      // currentRegion을 내 위치로 설정
       setCurrentRegion({
         latitude,
         longitude,
         latitudeDelta,
         longitudeDelta,
       });
+
+      // 한 번만 실행되도록 플래그 설정
+      hasMovedToInitialLocation.current = true;
     }
-  }, [latitude, longitude, currentRegion, zoomLevel]);
+  }, [latitude, longitude]);
 
   // 지도 region 변경 핸들러
   const handleRegionChangeComplete = useCallback((region: Region) => {
@@ -285,6 +295,7 @@ export const MapScreen = () => {
             longitudeDelta,
           };
         })()}
+        region={currentRegion || undefined}
         onRegionChangeComplete={handleRegionChangeComplete}
       >
         {traces.length > 1 && traces.slice(1).map((trace, index) => {
