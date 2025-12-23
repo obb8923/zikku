@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
+import { View, TouchableOpacity, Animated } from 'react-native';
 import {
   createBottomTabNavigator,
   TransitionPresets,
@@ -38,6 +38,9 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
       route.name === TAB_NAME.ARCHIVE || route.name === TAB_NAME.MORE,
   );
   const insets = useSafeAreaInsets();
+
+  // 탭바 fade in 애니메이션
+  const tabBarOpacity = useRef(new Animated.Value(0)).current;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{
@@ -96,13 +99,26 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
   
   }, [ handleImagePicked]);
 
+  // hasStarted 변경 시 탭바 fade in 애니메이션
+  useEffect(() => {
+    if (hasStarted && isMapTabActive) {
+      Animated.timing(tabBarOpacity, {
+        toValue: 1,
+        duration: 350,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      tabBarOpacity.setValue(0);
+    }
+  }, [hasStarted, isMapTabActive, tabBarOpacity]);
+
   // 탭바 표시 조건: Map 탭이 활성화되어 있고, 초기 화면을 시작한 경우에만 표시
   if (!isMapTabActive || !hasStarted) {
     return null;
   }
 
   return (
-    <View 
+    <Animated.View 
     pointerEvents="auto"
     style={{
       position: 'absolute',
@@ -111,7 +127,7 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
       alignItems: 'center',
       backgroundColor: 'transparent', 
       paddingHorizontal: 16,
-      opacity: 1,
+      opacity: tabBarOpacity,
     }}
     >
       {/* 왼쪽: 탭들 (아이콘만, flex-1) */}
@@ -190,7 +206,7 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
         }}
         image={selectedImage}
       />
-    </View>
+    </Animated.View>
   );
 };
 

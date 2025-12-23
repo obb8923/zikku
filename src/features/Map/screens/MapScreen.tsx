@@ -59,7 +59,7 @@ export const MapScreen = () => {
   const requestLocationPermission = usePermissionStore((s) => s.requestLocationPermission);
   const locationPermission = usePermissionStore((s) => s.locationPermission);
   const mapRef = useRef<MapView>(null);
-  const [currentRegion, setCurrentRegion] = useState<Region | null>(INITIAL_MAP_REGION);
+  const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(13);
   const latitude = useLocationStore(state => state.latitude);
   const longitude = useLocationStore(state => state.longitude);
@@ -78,11 +78,13 @@ export const MapScreen = () => {
   const setHasStarted = useSetHasStarted();
   const insets = useSafeAreaInsets();
   
-  // 애니메이션 값들
-  const initialScreenOpacity = useRef(new Animated.Value(1)).current;
-  const controlsOpacity = useRef(new Animated.Value(0)).current;
+  // 애니메이션 값 (단일 progress로 fade-in/fade-out 동기화)
+  // progress: 0 = 초기 화면 표시, 1 = 컨트롤 표시
+  const animationProgress = useRef(new Animated.Value(0)).current;
   // 초기 위치로 설정했는지 추적하는 ref
   const hasMovedToInitialLocation = useRef(false);
+  // 오버레이 표시 여부 (단일 boolean으로 상태 단순화)
+  const [overlayVisible, setOverlayVisible] = useState(true);
 
   // 화면 진입 시 위치 권한 요청 및 현재 위치 가져오기
   useEffect(() => {
@@ -104,49 +106,51 @@ export const MapScreen = () => {
     };
   }, [startTracking, stopTracking]);
 
-  // hasStarted 변경 시 애니메이션 처리
+  // hasStarted 변경 시 애니메이션 처리 (단일 progress로 동기화)
   useEffect(() => {
     if (hasStarted) {
-      // 처음 화면 전체 fade out
-      Animated.parallel([
-        Animated.timing(initialScreenOpacity, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        // 컨트롤들 fade in
-        Animated.timing(controlsOpacity, {
-          toValue: 1,
-          duration: 300,
-          delay: 150, // 약간의 딜레이 후 나타남
-          useNativeDriver: true,
-        }),
-      ]).start();
+      // progress를 0에서 1로 애니메이션 (초기 화면 fade out + 컨트롤 fade in 동시)
+      Animated.timing(animationProgress, {
+        toValue: 1,
+        duration: 350,
+        useNativeDriver: true,
+      }).start(() => {
+        // 애니메이션 완료 후 오버레이 숨김
+        setOverlayVisible(false);
+      });
     } else {
       // 초기 상태로 리셋
-      initialScreenOpacity.setValue(1);
-      controlsOpacity.setValue(0);
+      animationProgress.setValue(0);
+      setOverlayVisible(true);
     }
-  }, [hasStarted, initialScreenOpacity, controlsOpacity]);
+  }, [hasStarted, animationProgress]);
 
-  // 내 현재 위치로 지도 region 설정 (초기 위치 로드 시 한 번만 실행)
+  // 초기 region 설정 (위치 정보가 로드되면 내 위치로, 없으면 기본값으로)
   useEffect(() => {
-    if (
-      latitude &&
-      longitude &&
-      !hasMovedToInitialLocation.current
-    ) {
-      const { latitudeDelta, longitudeDelta } = zoomToDelta(ZOOM_LEVEL.DEFAULT);
-      // currentRegion을 내 위치로 설정
+    if (hasMovedToInitialLocation.current) {
+      return; // 이미 내 위치로 설정했으면 더 이상 실행하지 않음
+    }
+
+    const { latitudeDelta, longitudeDelta } = zoomToDelta(ZOOM_LEVEL.DEFAULT);
+    
+    if (latitude && longitude) {
+      // 내 현재 위치로 설정
       setCurrentRegion({
         latitude,
         longitude,
         latitudeDelta,
         longitudeDelta,
       });
-
-      // 한 번만 실행되도록 플래그 설정
       hasMovedToInitialLocation.current = true;
+    } else if (!currentRegion) {
+      // 위치 정보가 없고 아직 설정되지 않았으면 기본값(서울)으로 설정
+      // (위치 정보가 로드되면 위의 조건에서 덮어씌워짐)
+      setCurrentRegion({
+        latitude: INITIAL_MAP_REGION.latitude,
+        longitude: INITIAL_MAP_REGION.longitude,
+        latitudeDelta,
+        longitudeDelta,
+      });
     }
   }, [latitude, longitude]);
 
@@ -235,9 +239,12 @@ export const MapScreen = () => {
       <Animated.View 
         className="flex-1 absolute inset-0"
         style={{ 
-          opacity: initialScreenOpacity,
-          zIndex: hasStarted ? -1 : 1000,
-          pointerEvents: hasStarted ? 'none' : 'auto',
+          opacity: animationProgress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [1, 0], // progress가 0→1일 때 opacity는 1→0
+          }),
+          zIndex: overlayVisible ? 1000 : -1,
+          pointerEvents: overlayVisible ? 'auto' : 'none',
         }}
       >
         <GradientMask />
@@ -269,7 +276,7 @@ export const MapScreen = () => {
       <Animated.View 
         className="flex-1 absolute inset-0"
         style={{ 
-          opacity: controlsOpacity,
+          opacity: animationProgress, // progress가 0→1일 때 opacity도 0→1
           zIndex: 1001,
         }}
       >
@@ -286,15 +293,6 @@ export const MapScreen = () => {
         mapType="mutedStandard"      // "standard" | "satellite" | "hybrid" | "mutedStandard"
         ref={mapRef}
         showsUserLocation={locationPermission}
-        initialRegion={(() => {
-          const { latitudeDelta, longitudeDelta } = zoomToDelta(ZOOM_LEVEL.DEFAULT);
-          return {
-            latitude: latitude || 37.5666102,
-            longitude: longitude || -129.9783881,
-            latitudeDelta,
-            longitudeDelta,
-          };
-        })()}
         region={currentRegion || undefined}
         onRegionChangeComplete={handleRegionChangeComplete}
       >
