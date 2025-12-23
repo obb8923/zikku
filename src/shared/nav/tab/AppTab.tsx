@@ -216,66 +216,19 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
           );
         })}
       </LiquidGlassView>
-      {/* 갤러리 버튼 */}
-      <Animated.View
-        pointerEvents={isFabOpen ? 'auto' : 'none'}
-        style={{
-          position: 'absolute',
-          bottom: insets.bottom + 10,
-          right: 16,
-          transform: [
-            { translateY: galleryButtonTranslateY },
-            { scale: buttonScale },
-          ],
-          opacity: fabAnimation,
-        }}
-      >
-        <LiquidGlassButton onPress={handleSelectFromGallery} size="large">
-          <ImageIcon width={24} height={24} color="black" />
-        </LiquidGlassButton>
-      </Animated.View>
+      <View className="flex-row gap-2">
+     
 
       {/* 카메라 버튼 */}
-      <Animated.View
-        pointerEvents={isFabOpen ? 'auto' : 'none'}
-        style={{
-          position: 'absolute',
-          bottom: insets.bottom + 10,
-          right: 16,
-          transform: [
-            { translateY: cameraButtonTranslateY },
-            { scale: buttonScale },
-          ],
-          opacity: fabAnimation,
-        }}
-      >
+     
         <LiquidGlassButton onPress={handleTakePhoto} size="large">
           <CameraIcon width={24} height={24} color="black" />
         </LiquidGlassButton>
-      </Animated.View>
-
-      {/* 메인 FAB - 리퀴드글래스 버튼 */}
-      <Animated.View
-        style={{
-          opacity: isFabOpen ? 0.8 : 1,
-          transform: [
-            {
-              rotate: fabAnimation.interpolate({
-                inputRange: [0, 1],
-                outputRange: ['0deg', '45deg'],
-              }) as any,
-            },
-          ],
-        }}
-      >
-        <LiquidGlassButton
-          onPress={handlePressMainFab}
-          size="large"
-        >
-          <AddIcon width={24} height={24} color={COLORS.TEXT} />
+         {/* 갤러리 버튼 */}
+         <LiquidGlassButton onPress={handleSelectFromGallery} size="large">
+          <ImageIcon width={24} height={24} color="black" />
         </LiquidGlassButton>
-      </Animated.View>
-
+        </View>
       {/* 기록 모달 */}
       <RecordModal
         visible={isModalVisible}
