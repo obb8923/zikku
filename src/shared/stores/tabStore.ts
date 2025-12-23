@@ -19,7 +19,6 @@ interface TabStore {
   hideTabBar: () => void;
   // 구독 화면 이동 플래그 설정/해제
   setPendingSubscriptionNav: (value: boolean) => void;
-
 }
 
 // Zustand 스토어 생성

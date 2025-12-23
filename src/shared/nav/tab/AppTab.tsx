@@ -19,6 +19,7 @@ import {LiquidGlassView} from '@components/LiquidGlassView';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import { launchCamera, launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
 import { RecordModal } from '@components/RecordModal';
+import { useHasStarted } from '@stores/initialScreenStore';
 
 export type AppTabParamList = {
   [TAB_NAME.MAP]: undefined;
@@ -30,6 +31,7 @@ const Tab = createBottomTabNavigator<AppTabParamList>();
 
 const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
   const isMapTabActive = state.routes[state.index]?.name === TAB_NAME.MAP;
+  const hasStarted = useHasStarted();
 
   const archiveAndMoreRoutes = state.routes.filter(
     (route) =>
@@ -94,9 +96,14 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
   
   }, [ handleImagePicked]);
 
+  // 탭바 표시 조건: Map 탭이 활성화되어 있고, 초기 화면을 시작한 경우에만 표시
+  if (!isMapTabActive || !hasStarted) {
+    return null;
+  }
+
   return (
     <View 
-    pointerEvents={isMapTabActive ? 'auto' : 'none'}
+    pointerEvents="auto"
     style={{
       position: 'absolute',
       bottom: insets.bottom + 10,
@@ -104,7 +111,7 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
       alignItems: 'center',
       backgroundColor: 'transparent', 
       paddingHorizontal: 16,
-      opacity: isMapTabActive ? 1 : 0,
+      opacity: 1,
     }}
     >
       {/* 왼쪽: 탭들 (아이콘만, flex-1) */}

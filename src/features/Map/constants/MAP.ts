@@ -1,6 +1,24 @@
-/**
- * Map 관련 상수
- */
+import { CHIP_TYPE } from '@constants/CHIP';
+
+// 카테고리별 마커 이미지 매핑 (한 번만 로드)
+export const MARKER_IMAGES = {
+  [CHIP_TYPE.LANDSCAPE]: require('@assets/pngs/blue.png'),
+  [CHIP_TYPE.PLACE]: require('@assets/pngs/purple.png'),
+  [CHIP_TYPE.LIFE]: require('@assets/pngs/red.png'),
+  [CHIP_TYPE.DISCOVERY]: require('@assets/pngs/orange.png'),
+  [CHIP_TYPE.TOGETHER]: require('@assets/pngs/green.png'),
+} as const;
+
+// 기본 마커 이미지
+export const DEFAULT_MARKER_IMAGE = require('@assets/pngs/blue.png');
+
+// 카테고리별 마커 이미지 가져오기 함수
+export const getMarkerImage = (category: string | null | undefined) => {
+  if (!category) {
+    return DEFAULT_MARKER_IMAGE;
+  }
+  return MARKER_IMAGES[category as keyof typeof MARKER_IMAGES] ?? DEFAULT_MARKER_IMAGE;
+};
 
 // 줌 레벨에 따른 Polyline 두께 계산 상수
 export const POLYLINE_STROKE_CONFIG = {

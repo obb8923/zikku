@@ -18,6 +18,7 @@ export type LiquidGlassTextButtonProps = {
   style?: ViewStyle;
   text: string;
   textStyle?: TextStyle;
+  tintColor?: string;
 };
 export const LiquidGlassTextButton = ({
   onPress,
@@ -28,6 +29,7 @@ export const LiquidGlassTextButton = ({
   text,
   textStyle,
   style,
+  tintColor = 'rgba(0,0,0,0)',
 }: LiquidGlassTextButtonProps) => {
   const sizeStyle = {
     small: { height: BUTTON_SIZE_SMALL},
@@ -44,7 +46,7 @@ export const LiquidGlassTextButton = ({
       borderRadius={borderRadius}
       interactive={!disabled}
       style={style}
-      tintColor={'rgba(0,0,0,0)'}
+      tintColor={tintColor}
     >
       <Pressable
         onPress={onPress}

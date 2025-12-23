@@ -1,6 +1,7 @@
 import {Text as RNText, TextStyle} from 'react-native';
 
 export type TypographyType = 
+  | 'title0'
   | 'title1' | 'title2' | 'title3' | 'title4'
   | 'body1' | 'body2' | 'body3' 
   | 'caption1'
@@ -20,6 +21,13 @@ const NOTO_SANS_FONT_FAMILY = {
 
 const getTypographyStyle = (type: TypographyType): TextStyle => {
   switch(type){
+    case 'title0':
+      return {
+        fontFamily: NOTO_SANS_FONT_FAMILY.semibold,
+        fontSize: 48,
+        lineHeight: 48 * 1.1,
+        letterSpacing: -1.2,
+      };
     case 'title1':
       return {
         fontFamily: NOTO_SANS_FONT_FAMILY.semibold,

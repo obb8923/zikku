@@ -1,17 +1,19 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Image } from 'react-native';
+import { View, Image, Animated } from 'react-native';
 import { usePermissionStore } from '@stores/permissionStore';
 import MapView, { Region, Polyline, Marker } from 'react-native-maps';
 import { useLocationStore } from '@stores/locationStore';
 import { useTraceStore } from '@stores/traceStore';
 import { useRecordStore, Record } from '@stores/recordStore';
+import { useHasStarted, useSetHasStarted } from '@stores/initialScreenStore';
 import { MapDebugControls } from '../components/MapDebugControls';
 import { MapControls } from '../components/MapControls';
-import { RecordModal } from '@components/index';
-import { POLYLINE_STROKE_CONFIG, INITIAL_MAP_REGION, ZOOM_LEVEL, MARKER_SIZE_CONFIG } from '@/features/Map/constants/MAP';
+import { RecordModal, LiquidGlassTextButton } from '@components/index';
+import { POLYLINE_STROKE_CONFIG, INITIAL_MAP_REGION, ZOOM_LEVEL, MARKER_SIZE_CONFIG, getMarkerImage } from '@/features/Map/constants/MAP';
 import { getPolylineStrokeWidth } from '../utils/polylineUtils';
-import { CHIP_TYPE } from '@constants/CHIP';
 import { GradientMask } from '../components/GradientMask';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text } from '@components/index';
 // zoom 레벨을 delta로 변환하는 유틸리티 함수
 const zoomToDelta = (zoom: number): { latitudeDelta: number; longitudeDelta: number } => {
   const latitudeDelta = 360 / Math.pow(2, zoom);
@@ -22,24 +24,6 @@ const zoomToDelta = (zoom: number): { latitudeDelta: number; longitudeDelta: num
 // delta를 zoom 레벨로 변환하는 유틸리티 함수
 const deltaToZoom = (latitudeDelta: number): number => {
   return Math.log2(360 / latitudeDelta);
-};
-
-// 카테고리별 마커 이미지 매핑
-const getMarkerImage = (category: string | null | undefined) => {
-  switch (category) {
-    case CHIP_TYPE.LANDSCAPE:
-      return require('../../../../assets/pngs/blue.png');
-    case CHIP_TYPE.PLACE:
-      return require('../../../../assets/pngs/purple.png');
-    case CHIP_TYPE.LIFE:
-      return require('../../../../assets/pngs/red.png');
-    case CHIP_TYPE.DISCOVERY:
-      return require('../../../../assets/pngs/orange.png');
-    case CHIP_TYPE.TOGETHER:
-      return require('../../../../assets/pngs/green.png');
-    default:
-      return require('../../../../assets/pngs/blue.png'); // 기본값
-  }
 };
 
 // 줌 레벨에 따른 마커 크기 계산
@@ -89,6 +73,14 @@ export const MapScreen = () => {
   // Record detail modal
   const [selectedRecord, setSelectedRecord] = useState<Record | null>(null);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+  // 초기 화면 상태 (전역 상태로 관리)
+  const hasStarted = useHasStarted();
+  const setHasStarted = useSetHasStarted();
+  const insets = useSafeAreaInsets();
+  
+  // 애니메이션 값들
+  const initialScreenOpacity = useRef(new Animated.Value(1)).current;
+  const controlsOpacity = useRef(new Animated.Value(0)).current;
 
   // 화면 진입 시 위치 권한 요청 및 현재 위치 가져오기
   useEffect(() => {
@@ -109,6 +101,31 @@ export const MapScreen = () => {
       stopTracking();
     };
   }, [startTracking, stopTracking]);
+
+  // hasStarted 변경 시 애니메이션 처리
+  useEffect(() => {
+    if (hasStarted) {
+      // 처음 화면 전체 fade out
+      Animated.parallel([
+        Animated.timing(initialScreenOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        // 컨트롤들 fade in
+        Animated.timing(controlsOpacity, {
+          toValue: 1,
+          duration: 300,
+          delay: 150, // 약간의 딜레이 후 나타남
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // 초기 상태로 리셋
+      initialScreenOpacity.setValue(1);
+      controlsOpacity.setValue(0);
+    }
+  }, [hasStarted, initialScreenOpacity, controlsOpacity]);
 
   // 초기 region 설정 (currentRegion이 없을 때만)
   useEffect(() => {
@@ -198,10 +215,62 @@ export const MapScreen = () => {
     });
   }, [latitude, longitude, currentRegion, zoomLevel]);
 
+  const handleStart = useCallback(() => {
+    setHasStarted(true);
+  }, [setHasStarted]);
 
   return (
     <View className="flex-1">
-      <GradientMask />
+      {/* 처음 화면 */}
+      <Animated.View 
+        className="flex-1 absolute inset-0"
+        style={{ 
+          opacity: initialScreenOpacity,
+          zIndex: hasStarted ? -1 : 1000,
+          pointerEvents: hasStarted ? 'none' : 'auto',
+        }}
+      >
+        <GradientMask />
+        <View 
+          style={{  
+            flex: 1,
+            justifyContent: 'space-between',
+            paddingTop: insets.top + 16,
+            paddingBottom: insets.bottom + 16,
+            paddingHorizontal: 32, 
+            zIndex: 200 }}
+        >
+          <View className="w-full">
+          <Text type="title1" text="반가워요" className="text-text-component"/>
+          <Text type="title0" text="SEOUL" className="text-text font-bold"/>
+
+          </View>
+          <LiquidGlassTextButton
+            text="시작하기"
+            onPress={handleStart}
+            size="large"
+            style={{ width: '100%' }}
+            tintColor="white"
+            textStyle={{ color: 'black' }}
+          />
+        </View>
+      </Animated.View>
+      {/* 컨트롤 */}
+      <Animated.View 
+        className="flex-1 absolute inset-0"
+        style={{ 
+          opacity: controlsOpacity,
+          zIndex: 1001,
+        }}
+      >
+            <MapControls
+              onZoomIn={handleZoomIn}
+              onZoomOut={handleZoomOut}
+              onMoveToMyLocation={handleMoveToMyLocationWithFixedZoom}
+            />
+            <MapDebugControls />
+      </Animated.View>
+
      <MapView
         style={{ flex: 1 }}
         mapType="mutedStandard"      // "standard" | "satellite" | "hybrid" | "mutedStandard"
@@ -272,14 +341,9 @@ export const MapScreen = () => {
         })}
       </MapView>
 
-      {/* 지도 컨트롤용 리퀴드글래스 버튼들 */}
-      <MapControls
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onMoveToMyLocation={handleMoveToMyLocationWithFixedZoom}
-      />
-      {/* 개발 모드: 디버그 컨트롤 */}
-      <MapDebugControls />
+      
+      
+     
      
       {/* 기록 상세 / 보기용 모달 (RecordModal 공용 사용) */}
       <RecordModal
