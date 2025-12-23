@@ -8,6 +8,7 @@ type ChipProps = {
   chipType: ChipTypeKey | null;
   color?: string;
   tintColor?: string;
+  interactive?: boolean;
 };
 
 // 컬러 문자열에서 alpha 값을 변경하는 헬퍼 함수
@@ -32,7 +33,7 @@ const setColorAlpha = (color: string, alpha: number): string => {
   return color;
 };
 
-export const Chip = ({ chipType, color, tintColor }: ChipProps) => {
+export const Chip = ({ chipType, color, tintColor, interactive = true }: ChipProps) => {
   // chipType이 null인 경우 (선택되지 않은 상태)
   if (chipType === null) {
     return (
@@ -47,7 +48,9 @@ export const Chip = ({ chipType, color, tintColor }: ChipProps) => {
           paddingHorizontal: 16,
           paddingVertical: 6,
           alignSelf: 'flex-start',
+          opacity: interactive ? 1 : 0.6,
         }}
+        pointerEvents={interactive ? 'auto' : 'none'}
       >
         <Text 
           type="body2" 
@@ -80,7 +83,9 @@ export const Chip = ({ chipType, color, tintColor }: ChipProps) => {
         paddingHorizontal: 16,
         paddingVertical: 6,
         alignSelf: 'flex-start',
+        opacity: interactive ? 1 : 0.6,
       }}
+      pointerEvents={interactive ? 'auto' : 'none'}
     >
       {IconComponent && (
         <IconComponent width={24} height={24} color={textColor} />

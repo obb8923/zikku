@@ -11,6 +11,7 @@ type MapControlsProps = {
   onZoomOut: () => void;
   onMoveToMyLocation: () => void;
   containerStyle?: StyleProp<ViewStyle>;
+  disableMyLocation?: boolean;
 };
 
 export const MapControls = ({
@@ -18,6 +19,7 @@ export const MapControls = ({
   onZoomOut,
   onMoveToMyLocation,
   containerStyle,
+  disableMyLocation = false,
 }: MapControlsProps) => {
   const insets = useSafeAreaInsets();
   const defaultStyle: ViewStyle = { right: 16, top: insets.top + 16 };
@@ -33,7 +35,11 @@ export const MapControls = ({
         <MinusSmall width={24} height={24} color="black" />
       </LiquidGlassButton>
 
-      <LiquidGlassButton onPress={onMoveToMyLocation} borderRadius={8}>
+      <LiquidGlassButton 
+        onPress={onMoveToMyLocation} 
+        borderRadius={8}
+        disabled={disableMyLocation}
+      >
         <LocationUser width={24} height={24} color="black" />
       </LiquidGlassButton>
     </View>

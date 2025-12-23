@@ -315,9 +315,115 @@ export async function saveRecord(
   }
 }
 
+/**
+ * 레코드를 Supabase에서 업데이트합니다.
+ * @param recordId 레코드 ID
+ * @param updateData 업데이트할 데이터
+ * @returns 업데이트된 레코드 데이터
+ */
+export async function updateRecord(
+  recordId: string,
+  updateData: {
+    latitude?: number;
+    longitude?: number;
+    category?: string;
+    memo?: string | null;
+  },
+): Promise<any> {
+  console.log('[updateRecord] 시작');
+  console.log('[updateRecord] 입력:', {
+    recordId,
+    updateData,
+  });
+  
+  try {
+    console.log('[updateRecord] Supabase update 시작');
+    const { data, error } = await supabase
+      .from('records')
+      .update(updateData)
+      .eq('id', recordId)
+      .select()
+      .single();
+    
+    console.log('[updateRecord] Supabase update 응답:', {
+      data: data ? '성공' : 'null',
+      error: error ? {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      } : null,
+    });
+    
+    if (error) {
+      console.error('[updateRecord] 업데이트 실패 상세:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+      throw new Error(`레코드 업데이트 실패: ${error.message}`);
+    }
+    
+    console.log('[updateRecord] 업데이트 성공:', data);
+    console.log('[updateRecord] 완료');
+    return data;
+  } catch (error: any) {
+    console.error('레코드 업데이트 오류:', error);
+    throw error;
+  }
+}
+
+/**
+ * 레코드를 Supabase에서 삭제합니다.
+ * @param recordId 레코드 ID
+ * @returns 삭제 성공 여부
+ */
+export async function deleteRecord(recordId: string): Promise<void> {
+  console.log('[deleteRecord] 시작');
+  console.log('[deleteRecord] 입력:', {
+    recordId,
+  });
+  
+  try {
+    console.log('[deleteRecord] Supabase delete 시작');
+    const { error } = await supabase
+      .from('records')
+      .delete()
+      .eq('id', recordId);
+    
+    console.log('[deleteRecord] Supabase delete 응답:', {
+      error: error ? {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      } : null,
+    });
+    
+    if (error) {
+      console.error('[deleteRecord] 삭제 실패 상세:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+      throw new Error(`레코드 삭제 실패: ${error.message}`);
+    }
+    
+    console.log('[deleteRecord] 삭제 성공');
+    console.log('[deleteRecord] 완료');
+  } catch (error: any) {
+    console.error('레코드 삭제 오류:', error);
+    throw error;
+  }
+}
+
 export const RecordService = {
   uploadImageToStorage,
   createRecord,
   saveRecord,
+  updateRecord,
+  deleteRecord,
 };
 

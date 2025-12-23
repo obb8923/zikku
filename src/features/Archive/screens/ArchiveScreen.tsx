@@ -6,7 +6,7 @@ import { Background } from '@components/Background';
 import { Text } from '@components/Text';
 import { BackButton } from '@components/BackButton';
 import { useRecordStore, Record } from '@stores/recordStore';
-import { RecordDetailModal } from '@components/index';
+import { RecordModal } from '@components/index';
 import { CHIP_TYPE, CHIP_TINT_COLORS, type ChipTypeKey } from '@constants/CHIP';
 import { Chip, LiquidGlassView } from '@components/index';
 import { DEVICE_HEIGHT } from '@constants/NORMAL';
@@ -134,8 +134,9 @@ export const ArchiveScreen = () => {
       </View>
 
       {/* 기록 상세정보 모달 */}
-      <RecordDetailModal
+      <RecordModal
         visible={isDetailModalVisible}
+        mode="detail"
         record={selectedRecord}
         onClose={() => {
           setIsDetailModalVisible(false);

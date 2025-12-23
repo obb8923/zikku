@@ -25,6 +25,8 @@ interface RecordState {
   // Actions
   fetchRecords: () => Promise<void>;
   addRecord: (record: Record) => void;
+  updateRecord: (recordId: string, record: Record) => void;
+  removeRecord: (recordId: string) => void;
   loadRecordsFromStorage: () => Promise<void>;
   saveRecordsToStorage: () => Promise<void>;
   clearRecords: () => void;
@@ -128,6 +130,39 @@ export const useRecordStore = create<RecordState>((set, get) => ({
       memo: record.memo ? `${record.memo.substring(0, 20)}...` : null,
       created_at: record.created_at,
     });
+  },
+  
+  // 로컬에 record 업데이트
+  updateRecord: (recordId: string, updatedRecord: Record) => {
+    set((state) => {
+      const newRecords = state.records.map((r) =>
+        r.id === recordId ? updatedRecord : r
+      );
+      // 로컬 스토리지에 비동기로 저장
+      get().saveRecordsToStorage();
+      return { records: newRecords };
+    });
+    console.log('[RecordStore] 로컬에 record 업데이트:', {
+      id: updatedRecord.id,
+      user_id: updatedRecord.user_id,
+      image_path: updatedRecord.image_path,
+      latitude: updatedRecord.latitude,
+      longitude: updatedRecord.longitude,
+      category: updatedRecord.category,
+      memo: updatedRecord.memo ? `${updatedRecord.memo.substring(0, 20)}...` : null,
+      created_at: updatedRecord.created_at,
+    });
+  },
+  
+  // 로컬에서 record 제거
+  removeRecord: (recordId: string) => {
+    set((state) => {
+      const newRecords = state.records.filter((r) => r.id !== recordId);
+      // 로컬 스토리지에 비동기로 저장
+      get().saveRecordsToStorage();
+      return { records: newRecords };
+    });
+    console.log('[RecordStore] 로컬에서 record 제거:', recordId);
   },
   
   // 로컬 스토리지에서 records 불러오기
