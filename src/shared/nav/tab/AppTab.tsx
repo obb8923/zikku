@@ -1,11 +1,10 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { View, TouchableOpacity, Animated } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, TouchableOpacity } from 'react-native';
 import {
   createBottomTabNavigator,
   TransitionPresets,
   type BottomTabBarProps,
 } from '@react-navigation/bottom-tabs';
-import { CommonActions, useNavigation } from '@react-navigation/native';
 import { MapStack } from '@nav/stack/MapStack';
 import { ArchiveStack } from '@nav/stack/ArchiveStack';
 import { MoreStack } from '@nav/stack/MoreStack';
@@ -14,15 +13,13 @@ import MapIcon from '@assets/svgs/Map.svg';
 import ArchiveIcon from '@assets/svgs/Archive.svg';
 import MoreIcon from '@assets/svgs/More.svg';
 import { LiquidGlassButton } from '@components/LiquidGlassButton';
-import AddIcon from '@assets/svgs/Add.svg';
 import CameraIcon from '@assets/svgs/Camera.svg';
 import ImageIcon from '@assets/svgs/Image.svg';
 import {LiquidGlassView} from '@components/LiquidGlassView';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import { launchCamera, launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
-import { usePermissionStore } from '@stores/permissionStore';
 import { RecordModal } from '@components/RecordModal';
-import {COLORS} from '@constants/COLORS';
+
 export type AppTabParamList = {
   [TAB_NAME.MAP]: undefined;
   [TAB_NAME.ARCHIVE]: undefined;
@@ -39,57 +36,13 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
       route.name === TAB_NAME.ARCHIVE || route.name === TAB_NAME.MORE,
   );
   const insets = useSafeAreaInsets();
-  const ensureCameraAndPhotos = usePermissionStore((s) => s.ensureCameraAndPhotos);
-  const rootNavigation = useNavigation();
 
-  const [isFabOpen, setIsFabOpen] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{
     uri: string;
     fileName?: string;
     type?: string;
   } | null>(null);
-  const fabAnimation = useRef(new Animated.Value(0)).current;
-
-  const { cameraButtonTranslateY, galleryButtonTranslateY, buttonScale } = useMemo(() => {
-    const cameraButtonTranslateY = fabAnimation.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, -40],
-    });
-    const galleryButtonTranslateY = fabAnimation.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, -100],
-    });
-    const buttonScale = fabAnimation.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0.8, 1],
-    });
-
-    return { cameraButtonTranslateY, galleryButtonTranslateY, buttonScale };
-  }, [fabAnimation]);
-
-  const openFab = useCallback(async () => {
-    const granted = await ensureCameraAndPhotos();
-    if (!granted) return;
-
-    setIsFabOpen(true);
-    Animated.spring(fabAnimation, {
-      toValue: 1,
-      useNativeDriver: true,
-      friction: 6,
-      tension: 40,
-    }).start();
-  }, [ensureCameraAndPhotos, fabAnimation]);
-
-  const closeFab = useCallback(() => {
-    setIsFabOpen(false);
-    Animated.spring(fabAnimation, {
-      toValue: 0,
-      useNativeDriver: true,
-      friction: 6,
-      tension: 40,
-    }).start();
-  }, [fabAnimation]);
 
   const handleImagePicked = useCallback(
     (response: ImagePickerResponse) => {
@@ -128,9 +81,8 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
       },
       handleImagePicked,
     );
-    // 이미지 선택기를 먼저 열고, FAB는 백그라운드에서 닫기
-    setTimeout(() => closeFab(), 0);
-  }, [closeFab, handleImagePicked]);
+   
+  }, [ handleImagePicked]);
 
   const handleTakePhoto = useCallback(async () => {
     launchCamera(
@@ -139,17 +91,9 @@ const CustomTabBar = ({state, descriptors, navigation}: BottomTabBarProps) => {
       },
       handleImagePicked,
     );
-    // 카메라를 먼저 열고, FAB는 백그라운드에서 닫기
-    setTimeout(() => closeFab(), 0);
-  }, [closeFab, handleImagePicked]);
+  
+  }, [ handleImagePicked]);
 
-  const handlePressMainFab = useCallback(() => {
-    if (isFabOpen) {
-      closeFab();
-    } else {
-      void openFab();
-    }
-  }, [isFabOpen, openFab, closeFab]);
   return (
     <View 
     pointerEvents={isMapTabActive ? 'auto' : 'none'}
