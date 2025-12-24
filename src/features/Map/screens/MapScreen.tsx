@@ -14,6 +14,8 @@ import { getPolylineStrokeWidth } from '../utils/polylineUtils';
 import { GradientMask } from '../components/GradientMask';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@components/index';
+import { LiquidGlassButton } from '@components/LiquidGlassButton';
+import ChevronLeft from '@assets/svgs/ChevronLeft.svg';
 // zoom 레벨을 delta로 변환하는 유틸리티 함수
 const zoomToDelta = (zoom: number): { latitudeDelta: number; longitudeDelta: number } => {
   const latitudeDelta = 360 / Math.pow(2, zoom);
@@ -257,6 +259,31 @@ export const MapScreen = () => {
     setHasStarted(true);
   }, [setHasStarted]);
 
+  const handleBackToInitial = useCallback(() => {
+    // 처음 화면으로 돌아가기
+    setHasStarted(false);
+    setOverlayVisible(true);
+    hasZoomedOnStart.current = false;
+    
+    // 줌 레벨을 INITIAL로 리셋
+    if (currentRegion && mapRef.current) {
+      const { latitudeDelta, longitudeDelta } = zoomToDelta(ZOOM_LEVEL.INITIAL);
+      mapRef.current.animateToRegion({
+        latitude: currentRegion.latitude,
+        longitude: currentRegion.longitude,
+        latitudeDelta,
+        longitudeDelta,
+      });
+      setCurrentRegion({
+        latitude: currentRegion.latitude,
+        longitude: currentRegion.longitude,
+        latitudeDelta,
+        longitudeDelta,
+      });
+      setZoomLevel(ZOOM_LEVEL.INITIAL);
+    }
+  }, [currentRegion]);
+
   return (
     <View className="flex-1">
       {/* 처음 화면 (애니메이션 완료 후 렌더링 취소) */}
@@ -307,6 +334,21 @@ export const MapScreen = () => {
           pointerEvents: 'box-none', // 컨트롤 영역이 아닌 부분은 터치 통과
         }}
       >
+            {/* 뒤로가기 버튼 (왼쪽 위) */}
+            {hasStarted && (
+              <View 
+                className="absolute"
+                style={{ 
+                  left: 16, 
+                  top: insets.top + 16,
+                  zIndex: 1002,
+                }}
+              >
+                <LiquidGlassButton onPress={handleBackToInitial} borderRadius={8}>
+                  <ChevronLeft width={24} height={24} color="black" />
+                </LiquidGlassButton>
+              </View>
+            )}
             <MapControls
               onZoomIn={handleZoomIn}
               onZoomOut={handleZoomOut}

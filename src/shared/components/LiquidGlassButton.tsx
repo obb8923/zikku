@@ -34,7 +34,6 @@ export const LiquidGlassButton = ({
     <LiquidGlassView
       borderRadius={borderRadius}
       interactive={!disabled}
-      tintColor={tintColor}
     >
       <Pressable
         onPress={(event) => {
