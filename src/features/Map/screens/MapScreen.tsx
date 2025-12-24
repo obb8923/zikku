@@ -280,6 +280,7 @@ export const MapScreen = () => {
         style={{ 
           opacity: animationProgress, // progress가 0→1일 때 opacity도 0→1
           zIndex: 1001,
+          pointerEvents: 'box-none', // 컨트롤 영역이 아닌 부분은 터치 통과
         }}
       >
             <MapControls
