@@ -63,5 +63,9 @@ export const ZOOM_LEVEL = {
   MIN: 5,
   MAX: 19,
   DEFAULT: 13,
+  // 처음 화면일 때의 줌 레벨 (작게, 넓은 영역 보기)
+  INITIAL: 10,
+  // 시작하기 버튼을 눌렀을 때의 줌 레벨 (확대)
+  STARTED: 14,
 } as const;
 

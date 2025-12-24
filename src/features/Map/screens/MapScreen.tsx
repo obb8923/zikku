@@ -83,6 +83,8 @@ export const MapScreen = () => {
   const animationProgress = useRef(new Animated.Value(0)).current;
   // 초기 위치로 설정했는지 추적하는 ref
   const hasMovedToInitialLocation = useRef(false);
+  // 시작하기 버튼을 눌렀을 때 줌 레벨 조정을 했는지 추적하는 ref
+  const hasZoomedOnStart = useRef(false);
   // 오버레이 표시 여부 (단일 boolean으로 상태 단순화)
   const [overlayVisible, setOverlayVisible] = useState(true);
 
@@ -106,7 +108,7 @@ export const MapScreen = () => {
     };
   }, [startTracking, stopTracking]);
 
-  // hasStarted 변경 시 애니메이션 처리 (단일 progress로 동기화)
+  // hasStarted 변경 시 애니메이션 처리 및 줌 레벨 조정
   useEffect(() => {
     if (hasStarted) {
       // progress를 0에서 1로 애니메이션 (초기 화면 fade out + 컨트롤 fade in 동시)
@@ -118,10 +120,31 @@ export const MapScreen = () => {
         // 애니메이션 완료 후 오버레이 숨김
         setOverlayVisible(false);
       });
+
+      // 줌 레벨을 확대 (STARTED 줌 레벨로, 한 번만 실행)
+      if (!hasZoomedOnStart.current && currentRegion && mapRef.current) {
+        hasZoomedOnStart.current = true;
+        const { latitudeDelta, longitudeDelta } = zoomToDelta(ZOOM_LEVEL.STARTED);
+        mapRef.current.animateToRegion({
+          latitude: currentRegion.latitude,
+          longitude: currentRegion.longitude,
+          latitudeDelta,
+          longitudeDelta,
+        });
+        // currentRegion과 zoomLevel도 업데이트
+        setCurrentRegion({
+          latitude: currentRegion.latitude,
+          longitude: currentRegion.longitude,
+          latitudeDelta,
+          longitudeDelta,
+        });
+        setZoomLevel(ZOOM_LEVEL.STARTED);
+      }
     } else {
       // 초기 상태로 리셋
       animationProgress.setValue(0);
       setOverlayVisible(true);
+      hasZoomedOnStart.current = false;
     }
   }, [hasStarted, animationProgress]);
 
@@ -131,7 +154,8 @@ export const MapScreen = () => {
       return; // 이미 내 위치로 설정했으면 더 이상 실행하지 않음
     }
 
-    const { latitudeDelta, longitudeDelta } = zoomToDelta(ZOOM_LEVEL.DEFAULT);
+    // 처음 화면일 때는 작은 줌 레벨 사용
+    const { latitudeDelta, longitudeDelta } = zoomToDelta(ZOOM_LEVEL.INITIAL);
     
     if (latitude && longitude) {
       // 내 현재 위치로 설정
