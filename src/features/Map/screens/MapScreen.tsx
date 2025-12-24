@@ -235,43 +235,45 @@ export const MapScreen = () => {
 
   return (
     <View className="flex-1">
-      {/* 처음 화면 */}
-      <Animated.View 
-        className="flex-1 absolute inset-0"
-        style={{ 
-          opacity: animationProgress.interpolate({
-            inputRange: [0, 1],
-            outputRange: [1, 0], // progress가 0→1일 때 opacity는 1→0
-          }),
-          zIndex: overlayVisible ? 1000 : -1,
-          pointerEvents: overlayVisible ? 'auto' : 'none',
-        }}
-      >
-        <GradientMask />
-        <View 
-          style={{  
-            flex: 1,
-            justifyContent: 'space-between',
-            paddingTop: insets.top + 16,
-            paddingBottom: insets.bottom + 16,
-            paddingHorizontal: 32, 
-            zIndex: 200 }}
+      {/* 처음 화면 (애니메이션 완료 후 렌더링 취소) */}
+      {overlayVisible && (
+        <Animated.View 
+          className="flex-1 absolute inset-0"
+          style={{ 
+            opacity: animationProgress.interpolate({
+              inputRange: [0, 1],
+              outputRange: [1, 0], // progress가 0→1일 때 opacity는 1→0
+            }),
+            zIndex: 1000,
+            pointerEvents: 'auto',
+          }}
         >
-          <View className="w-full">
-          <Text type="title1" text="반가워요" className="text-text-component"/>
-          <Text type="title0" text="SEOUL" className="text-text font-bold"/>
+          <GradientMask />
+          <View 
+            style={{  
+              flex: 1,
+              justifyContent: 'space-between',
+              paddingTop: insets.top + 16,
+              paddingBottom: insets.bottom + 16,
+              paddingHorizontal: 32, 
+              zIndex: 200 }}
+          >
+            <View className="w-full">
+            <Text type="title1" text="반가워요" className="text-text-component"/>
+            <Text type="title0" text="SEOUL" className="text-text font-bold"/>
 
+            </View>
+            <LiquidGlassTextButton
+              text="시작하기"
+              onPress={handleStart}
+              size="large"
+              style={{ width: '100%' }}
+              tintColor="white"
+              textStyle={{ color: 'black' }}
+            />
           </View>
-          <LiquidGlassTextButton
-            text="시작하기"
-            onPress={handleStart}
-            size="large"
-            style={{ width: '100%' }}
-            tintColor="white"
-            textStyle={{ color: 'black' }}
-          />
-        </View>
-      </Animated.View>
+        </Animated.View>
+      )}
       {/* 컨트롤 */}
       <Animated.View 
         className="flex-1 absolute inset-0"
