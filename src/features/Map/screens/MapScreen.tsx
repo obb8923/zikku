@@ -9,53 +9,14 @@ import { useHasStarted, useSetHasStarted } from '@stores/initialScreenStore';
 import { MapDebugControls } from '../components/MapDebugControls';
 import { MapControls } from '../components/MapControls';
 import { RecordModal, LiquidGlassTextButton } from '@components/index';
-import { POLYLINE_STROKE_CONFIG, INITIAL_MAP_REGION, ZOOM_LEVEL, MARKER_SIZE_CONFIG, getMarkerImage } from '@/features/Map/constants/MAP';
+import { POLYLINE_STROKE_CONFIG, INITIAL_MAP_REGION, ZOOM_LEVEL, getMarkerImage } from '@/features/Map/constants/MAP';
 import { getPolylineStrokeWidth } from '../utils/polylineUtils';
+import { zoomToDelta, deltaToZoom, getMarkerSize } from '../utils/mapUtils';
 import { GradientMask } from '../components/GradientMask';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@components/index';
 import { LiquidGlassButton } from '@components/LiquidGlassButton';
 import ChevronLeft from '@assets/svgs/ChevronLeft.svg';
-// zoom 레벨을 delta로 변환하는 유틸리티 함수
-const zoomToDelta = (zoom: number): { latitudeDelta: number; longitudeDelta: number } => {
-  const latitudeDelta = 360 / Math.pow(2, zoom);
-  const longitudeDelta = latitudeDelta; 
-  return { latitudeDelta, longitudeDelta };
-};
-
-// delta를 zoom 레벨로 변환하는 유틸리티 함수
-const deltaToZoom = (latitudeDelta: number): number => {
-  return Math.log2(360 / latitudeDelta);
-};
-
-// 줌 레벨에 따른 마커 크기 계산
-// - 지도를 확대하면 (보이는 영역이 좁아짐, latitudeDelta가 작음) → 마커가 커짐 (MAX_SIZE)
-// - 지도를 축소하면 (보이는 영역이 넓어짐, latitudeDelta가 큼) → 마커가 작아짐 (MIN_SIZE)
-const getMarkerSize = (region: Region | null): number => {
-  if (!region) {
-    return MARKER_SIZE_CONFIG.DEFAULT_SIZE;
-  }
-
-  const latitudeDelta = region.latitudeDelta;
-  
-  // 범위 제한
-  const clampedDelta = Math.max(
-    MARKER_SIZE_CONFIG.MIN_DELTA,
-    Math.min(MARKER_SIZE_CONFIG.MAX_DELTA, latitudeDelta)
-  );
-  
-  // 선형 보간
-  // latitudeDelta가 작을수록 (확대) ratio가 0에 가까워지고, size는 MAX_SIZE에 가까워짐
-  // latitudeDelta가 클수록 (축소) ratio가 1에 가까워지고, size는 MIN_SIZE에 가까워짐
-  const ratio =
-    (clampedDelta - MARKER_SIZE_CONFIG.MIN_DELTA) /
-    (MARKER_SIZE_CONFIG.MAX_DELTA - MARKER_SIZE_CONFIG.MIN_DELTA);
-  const size =
-    MARKER_SIZE_CONFIG.MAX_SIZE -
-    (MARKER_SIZE_CONFIG.MAX_SIZE - MARKER_SIZE_CONFIG.MIN_SIZE) * ratio;
-  
-  return Math.round(size);
-};
 
 export const MapScreen = () => {
   const requestLocationPermission = usePermissionStore((s) => s.requestLocationPermission);
@@ -143,10 +104,8 @@ export const MapScreen = () => {
         setZoomLevel(ZOOM_LEVEL.STARTED);
       }
     } else {
-      // 초기 상태로 리셋
-      animationProgress.setValue(0);
-      setOverlayVisible(true);
-      hasZoomedOnStart.current = false;
+      // hasStarted가 false로 변경되었을 때 (애니메이션 완료 후)
+      // 이미 handleBackToInitial에서 처리되므로 여기서는 추가 작업 불필요
     }
   }, [hasStarted, animationProgress]);
 
@@ -260,12 +219,10 @@ export const MapScreen = () => {
   }, [setHasStarted]);
 
   const handleBackToInitial = useCallback(() => {
-    // 처음 화면으로 돌아가기
-    setHasStarted(false);
+    // 오버레이를 먼저 표시 (애니메이션을 위해)
     setOverlayVisible(true);
-    hasZoomedOnStart.current = false;
     
-    // 줌 레벨을 INITIAL로 리셋
+    // 줌 레벨을 INITIAL로 리셋 (애니메이션과 동시에 시작)
     if (currentRegion && mapRef.current) {
       const { latitudeDelta, longitudeDelta } = zoomToDelta(ZOOM_LEVEL.INITIAL);
       mapRef.current.animateToRegion({
@@ -282,7 +239,18 @@ export const MapScreen = () => {
       });
       setZoomLevel(ZOOM_LEVEL.INITIAL);
     }
-  }, [currentRegion]);
+    
+    // progress를 1에서 0으로 애니메이션 (컨트롤 fade out + 초기 화면 fade in 동시)
+    Animated.timing(animationProgress, {
+      toValue: 0,
+      duration: 350,
+      useNativeDriver: true,
+    }).start(() => {
+      // 애니메이션 완료 후 상태 리셋
+      setHasStarted(false);
+      hasZoomedOnStart.current = false;
+    });
+  }, [currentRegion, animationProgress]);
 
   return (
     <View className="flex-1">

@@ -43,10 +43,8 @@ export const LiquidGlassView = ({
         className={className}
         style={[
           {
-            backgroundColor: 'rgba(255,255,255,0.12)',
+            backgroundColor: 'rgba(255,255,255,1)',
             borderRadius,
-            borderWidth: 1,
-            borderColor: 'rgba(255,255,255,0.25)',
           },
           style,
         ]}
