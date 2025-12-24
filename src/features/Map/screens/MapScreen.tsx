@@ -288,7 +288,7 @@ export const MapScreen = () => {
               onZoomOut={handleZoomOut}
               onMoveToMyLocation={handleMoveToMyLocationWithFixedZoom}
             />
-            <MapDebugControls />
+            {/* <MapDebugControls /> */}
       </Animated.View>
 
      <MapView

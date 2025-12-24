@@ -17,7 +17,8 @@ module.exports = {
         '@shared-types': './src/shared/types',
         '@services': './src/shared/services',
         '@utils': './src/shared/utils',
-        '@i18n': './src/shared/i18n',
+        '@i18n': './src/shared/libs/i18n',
+        '@hooks': './src/shared/hooks',
       },
     }],
     [
