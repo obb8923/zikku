@@ -1,6 +1,6 @@
 import { NavigationContainer, NavigationState, PartialState } from '@react-navigation/native';
 import { OnboardingStack } from "@nav/stack/OnboardingStack";
-import { AppTab } from "@nav/tab/AppTab";
+import { MapStack } from "@nav/stack/MapStack";
 import { useOnboardingStore } from '@stores/onboardingStore';
 import { useRef } from 'react';
 
@@ -38,7 +38,7 @@ export const RootStack = () => {
       }}
       onStateChange={handleStateChange}
     >
-      {isOnboardingCompleted ? <AppTab /> : <OnboardingStack />}
+      {!isOnboardingCompleted ? <MapStack /> : <OnboardingStack />}
     </NavigationContainer>
   );
 };

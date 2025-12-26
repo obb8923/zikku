@@ -4,7 +4,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import type { MoreStackParamList } from '@nav/stack/MoreStack';
-import type { AppTabParamList } from '@nav/tab/AppTab';
 import { Background } from '@components/Background';
 import { Text } from '@components/Text';
 import { BackButton } from '@components/BackButton';
@@ -144,11 +143,9 @@ const MoreListItem = ({ item, onPress, isLast }: MoreListItemProps) => {
 };
 
 type MoreScreenNavigationProp = NativeStackNavigationProp<MoreStackParamList, 'More'>;
-type TabNavigationProp = BottomTabNavigationProp<AppTabParamList>;
 
 export const MoreScreen = () => {
   const stackNavigation = useNavigation<MoreScreenNavigationProp>();
-  const tabNavigation = useNavigation<TabNavigationProp>();
   const insets = useSafeAreaInsets();
   const handleAppleLogin = useAuthStore((s) => s.handleAppleLogin);
   const handleGoogleLogin = useAuthStore((s) => s.handleGoogleLogin);
@@ -196,7 +193,6 @@ export const MoreScreen = () => {
   };
 
   const handleBackPress = () => {
-    tabNavigation.navigate(TAB_NAME.MAP);
   };
 
   return (
