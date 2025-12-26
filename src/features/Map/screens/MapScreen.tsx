@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Image, Animated } from 'react-native';
+import { View, Image, Animated, Pressable } from 'react-native';
 import { usePermissionStore } from '@stores/permissionStore';
 import MapView, { Region, Polyline, Marker } from 'react-native-maps';
 import { useLocationStore } from '@stores/locationStore';
@@ -8,15 +8,16 @@ import { useRecordStore, Record } from '@stores/recordStore';
 import { useHasStarted, useSetHasStarted } from '@stores/initialScreenStore';
 import { MapDebugControls } from '../components/MapDebugControls';
 import { MapControls } from '../components/MapControls';
-import { RecordModal, LiquidGlassTextButton } from '@components/index';
+import { MapInitialOverlay } from '../components/MapInitialOverlay';
+import { RecordModal } from '@components/index';
 import { POLYLINE_STROKE_CONFIG, INITIAL_MAP_REGION, ZOOM_LEVEL, getMarkerImage } from '@/features/Map/constants/MAP';
 import { getPolylineStrokeWidth } from '../utils/polylineUtils';
 import { zoomToDelta, deltaToZoom, getMarkerSize } from '../utils/mapUtils';
-import { GradientMask } from '../components/GradientMask';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text } from '@components/index';
 import { LiquidGlassButton } from '@components/LiquidGlassButton';
 import ChevronLeft from '@assets/svgs/ChevronLeft.svg';
+import { ArchiveScreen } from '@features/Archive/screens/ArchiveScreen';
+import { MoreScreen } from '@features/More/screens/MoreScreen';
 
 export const MapScreen = () => {
   const requestLocationPermission = usePermissionStore((s) => s.requestLocationPermission);
@@ -50,6 +51,9 @@ export const MapScreen = () => {
   const hasZoomedOnStart = useRef(false);
   // 오버레이 표시 여부 (단일 boolean으로 상태 단순화)
   const [overlayVisible, setOverlayVisible] = useState(true);
+  // 모달 상태 관리
+  const [modalType, setModalType] = useState<'archive' | 'more' | null>(null);
+  const modalSlideAnim = useRef(new Animated.Value(0)).current;
 
   // 화면 진입 시 위치 권한 요청 및 현재 위치 가져오기
   useEffect(() => {
@@ -218,6 +222,36 @@ export const MapScreen = () => {
     setHasStarted(true);
   }, [setHasStarted]);
 
+  const handleArchivePress = useCallback(() => {
+    setModalType('archive');
+    Animated.spring(modalSlideAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 65,
+      friction: 11,
+    }).start();
+  }, [modalSlideAnim]);
+
+  const handleMorePress = useCallback(() => {
+    setModalType('more');
+    Animated.spring(modalSlideAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 65,
+      friction: 11,
+    }).start();
+  }, [modalSlideAnim]);
+
+  const handleCloseModal = useCallback(() => {
+    Animated.timing(modalSlideAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setModalType(null);
+    });
+  }, [modalSlideAnim]);
+
   const handleBackToInitial = useCallback(() => {
     // 오버레이를 먼저 표시 (애니메이션을 위해)
     setOverlayVisible(true);
@@ -267,30 +301,11 @@ export const MapScreen = () => {
             pointerEvents: 'auto',
           }}
         >
-          <GradientMask />
-          <View 
-            style={{  
-              flex: 1,
-              justifyContent: 'space-between',
-              paddingTop: insets.top + 16,
-              paddingBottom: insets.bottom + 16,
-              paddingHorizontal: 32, 
-              zIndex: 200 }}
-          >
-            <View className="w-full">
-            <Text type="title1" text="반가워요" className="text-text-component"/>
-            <Text type="title0" text="SEOUL" className="text-text font-bold"/>
-
-            </View>
-            <LiquidGlassTextButton
-              text="시작하기"
-              onPress={handleStart}
-              size="large"
-              style={{ width: '100%' }}
-              tintColor="white"
-              textStyle={{ color: 'black' }}
-            />
-          </View>
+          <MapInitialOverlay 
+            onStart={handleStart}
+            onArchivePress={handleArchivePress}
+            onMorePress={handleMorePress}
+          />
         </Animated.View>
       )}
       {/* 컨트롤 */}
@@ -401,6 +416,66 @@ export const MapScreen = () => {
           setSelectedRecord(null);
         }}
       />
+      
+      {/* Archive/More 모달 */}
+      {modalType && (
+        <>
+          {/* 배경 오버레이 */}
+          <Pressable
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              zIndex: 2000,
+            }}
+            onPress={handleCloseModal}
+          />
+          {/* 모달 컨텐츠 */}
+          <Animated.View
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: '90%',
+              zIndex: 2001,
+              transform: [
+                {
+                  translateY: modalSlideAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [1000, 0], // 아래에서 위로 올라옴
+                  }),
+                },
+              ],
+            }}
+          >
+            <View className="flex-1 bg-background rounded-t-3xl" style={{ paddingTop: insets.top }}>
+              {/* 닫기 버튼 */}
+              <View
+                style={{
+                  paddingHorizontal: 16,
+                  paddingTop: 16,
+                  paddingBottom: 8,
+                  flexDirection: 'row',
+                  justifyContent: 'flex-end',
+                }}
+              >
+                <LiquidGlassButton onPress={handleCloseModal} borderRadius={8}>
+                  <ChevronLeft width={24} height={24} color="black" />
+                </LiquidGlassButton>
+              </View>
+              {/* 스택 컨텐츠 */}
+              <View className="flex-1">
+                {modalType === 'archive' && <ArchiveScreen />}
+                {modalType === 'more' && <MoreScreen />}
+              </View>
+            </View>
+          </Animated.View>
+        </>
+      )}
      
     </View>
   );

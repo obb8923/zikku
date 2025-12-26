@@ -1,7 +1,6 @@
 export const TAB_NAME = {
   MAP: 'map',
   ARCHIVE: 'archive',
-
   MORE: 'more',
 } as const;
 
