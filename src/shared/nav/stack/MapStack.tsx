@@ -19,8 +19,24 @@ export const MapStack = () => {
             initialRouteName="Map">
 
             <Stack.Screen name="Map" component={MapScreen} />
-            <Stack.Screen name="More" component={MoreScreen} />
-            <Stack.Screen name="Archive" component={ArchiveScreen} />
+            <Stack.Screen 
+              name="More" 
+              component={MoreScreen}
+              options={{
+                presentation: 'modal',
+                animation: 'slide_from_bottom',
+                gestureEnabled: true,
+              }}
+            />
+            <Stack.Screen 
+              name="Archive" 
+              component={ArchiveScreen}
+              options={{
+                presentation: 'modal',
+                animation: 'slide_from_bottom',
+                gestureEnabled: true,
+              }}
+            />
             <Stack.Screen name="MyInfo" component={MyInfoScreen} />
 
         </Stack.Navigator>
