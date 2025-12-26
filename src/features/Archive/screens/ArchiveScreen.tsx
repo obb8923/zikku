@@ -1,18 +1,20 @@
 import React, { useMemo } from 'react';
-import { View, TouchableOpacity, Image } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, TouchableOpacity } from 'react-native';
 import { FlashList, ListRenderItem } from '@shopify/flash-list';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { MapStackParamList } from '@nav/stack/MapStack';
 import { Background } from '@components/Background';
 import { Text } from '@components/Text';
-import { BackButton } from '@components/BackButton';
 import { useRecordStore, Record } from '@stores/recordStore';
-import { RecordModal } from '@components/index';
+import { LiquidGlassButton} from '@components/index';
 import { CHIP_TYPE, CHIP_TINT_COLORS, type ChipTypeKey } from '@constants/CHIP';
-import { Chip, LiquidGlassView } from '@components/index';
-import { DEVICE_HEIGHT } from '@constants/NORMAL';
 import { LiquidGlassImage } from '@components/index';
 import { COLORS } from '@constants/COLORS';
-import {BUTTON_SIZE_MEDIUM} from '@constants/NORMAL';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import XIcon from '@assets/svgs/X.svg';
+
+type ArchiveScreenNavigationProp = NativeStackNavigationProp<MapStackParamList, 'Archive'>;
 type ListItem = {
   type: 'group';
   title: string;
@@ -20,11 +22,9 @@ type ListItem = {
 };
 
 export const ArchiveScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<ArchiveScreenNavigationProp>();
   const records = useRecordStore(state => state.records);
-  const [selectedRecord, setSelectedRecord] = React.useState<Record | null>(null);
-  const [isDetailModalVisible, setIsDetailModalVisible] = React.useState(false);
-
+  const insets = useSafeAreaInsets();
   // records를 월별로 그룹화하여 리스트 아이템으로 변환
   const listData = useMemo(() => {
     const groups: { [key: string]: Record[] } = {};
@@ -88,8 +88,7 @@ export const ArchiveScreen = () => {
               <TouchableOpacity
                 key={record.id}
                 onPress={() => {
-                  setSelectedRecord(record);
-                  setIsDetailModalVisible(true);
+                  navigation.navigate('ArchiveDetail', { recordId: record.id });
                 }}
                 style={{ marginBottom: 12 }}
               >
@@ -109,9 +108,14 @@ export const ArchiveScreen = () => {
   };
 
   return (
-    <Background type="white" isStatusBarGap>
+    <Background isStatusBarGap={false}>
+      <View className="pt-4 px-6 mb-4 flex-row justify-between items-center">
+          <Text type="title3" text="기억 저장소" style={{ fontWeight: '600', color: COLORS.TEXT_2 }} />
+          <LiquidGlassButton size="small" onPress={() => navigation.goBack()}>
+            <XIcon width={20} height={20} color={COLORS.TEXT} />
+          </LiquidGlassButton>
+      </View>
       <View className="flex-1">
-        <BackButton onPress={() => navigation.goBack()} />
         {listData.length === 0 ? (
           <View className="flex-1 items-center justify-center">
             <Text type="body2" text="기록이 없습니다." style={{ color: 'rgba(0, 0, 0, 0.5)' }} />
@@ -121,28 +125,12 @@ export const ArchiveScreen = () => {
           <FlashList
             data={listData}
             renderItem={renderItem}
-            contentContainerStyle={{ paddingTop: BUTTON_SIZE_MEDIUM + 16, paddingBottom: 16 }}
+            contentContainerStyle={{ paddingTop: 16, paddingBottom: insets.bottom + 16 }}
             keyExtractor={(item) => `group-${item.title}`}
-            ListHeaderComponent={() => (
-              <View className="mb-4">
-                <Text type="title3" text="기억 저장소" style={{ fontWeight: '600', color: COLORS.TEXT_2 }} />
-              </View>
-            )}
           />
           </View>
         )}
       </View>
-
-      {/* 기록 상세정보 모달 */}
-      <RecordModal
-        visible={isDetailModalVisible}
-        mode="detail"
-        record={selectedRecord}
-        onClose={() => {
-          setIsDetailModalVisible(false);
-          setSelectedRecord(null);
-        }}
-      />
     </Background>
   );
 }

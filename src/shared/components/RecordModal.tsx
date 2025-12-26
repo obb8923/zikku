@@ -551,6 +551,9 @@ export const RecordModal = ({
                   multiline
                   numberOfLines={4}
                   maxLength={100}
+                  returnKeyType="done"
+                  blurOnSubmit={true}
+                  onSubmitEditing={() => Keyboard.dismiss()}
                   style={{
                     minHeight: 100,
                     textAlignVertical: 'top',

@@ -6,11 +6,10 @@ type BackgroundProps = {
   children: React.ReactNode;
   className?: string;
   style?: ViewStyle | ViewStyle[];
-  type?: 'green' | 'white' ;
   isStatusBarGap?: boolean;
   isTabBarGap?: boolean;
 }
-export const Background = ({children,isStatusBarGap=false,type='green',isTabBarGap=true,...props}: BackgroundProps) => {
+export const Background = ({children,isStatusBarGap=false,isTabBarGap=true,...props}: BackgroundProps) => {
   const insets = useSafeAreaInsets();
   return (
     <View className="flex-1 bg-background">

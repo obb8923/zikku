@@ -41,7 +41,7 @@ export const MARKER_SIZE_CONFIG = {
   // 최소 크기 (축소된 상태)
   MIN_SIZE: 0,
   // 최대 크기 (확대된 상태)
-  MAX_SIZE: 24,
+  MAX_SIZE: 20,
   // 최소 latitudeDelta (확대된 상태)
   MIN_DELTA: 0,
   // 최대 latitudeDelta (축소된 상태)

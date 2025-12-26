@@ -2,11 +2,13 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { MapScreen } from "@features/Map/screens/MapScreen";
 import { MoreScreen } from "@features/More/screens/MoreScreen";
 import { ArchiveScreen } from "@features/Archive/screens/ArchiveScreen";
+import { ArchiveDetailScreen } from "@features/Archive/screens/ArchiveDetailScreen";
 import { MyInfoScreen } from "@/features/MyInfo/screens/MyInfoScreen";
 export type MapStackParamList = {
     Map: undefined,
     More: undefined,
     Archive: undefined,
+    ArchiveDetail: { recordId: string },
     MyInfo: undefined,
 };
 
@@ -35,6 +37,13 @@ export const MapStack = () => {
                 presentation: 'modal',
                 animation: 'slide_from_bottom',
                 gestureEnabled: true,
+              }}
+            />
+            <Stack.Screen 
+              name="ArchiveDetail" 
+              component={ArchiveDetailScreen}
+              options={{
+                headerShown: false,
               }}
             />
             <Stack.Screen name="MyInfo" component={MyInfoScreen} />

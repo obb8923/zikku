@@ -16,7 +16,9 @@ import { zoomToDelta, deltaToZoom, getMarkerSize } from '../utils/mapUtils';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LiquidGlassButton } from '@components/LiquidGlassButton';
 import ChevronLeft from '@assets/svgs/ChevronLeft.svg';
-
+import { launchCamera, launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
+import CameraIcon from '@assets/svgs/Camera.svg';
+import ImageIcon from '@assets/svgs/Image.svg';
 export const MapScreen = () => {
   const requestLocationPermission = usePermissionStore((s) => s.requestLocationPermission);
   const locationPermission = usePermissionStore((s) => s.locationPermission);
@@ -35,6 +37,9 @@ export const MapScreen = () => {
   // Record detail modal
   const [selectedRecord, setSelectedRecord] = useState<Record | null>(null);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+  // Record create modal (이미지 선택 후)
+  const [selectedImage, setSelectedImage] = useState<{ uri: string; fileName?: string; type?: string; width?: number; height?: number } | null>(null);
+  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   // 초기 화면 상태 (전역 상태로 관리)
   const hasStarted = useHasStarted();
   const setHasStarted = useSetHasStarted();
@@ -251,6 +256,54 @@ export const MapScreen = () => {
     });
   }, [currentRegion, animationProgress]);
 
+  const handleImagePicked = useCallback(
+    (response: ImagePickerResponse) => {
+      if (response.didCancel || !response.assets || response.assets.length === 0) {
+        setIsCreateModalVisible(false);
+        setSelectedImage(null);
+        return;
+      }
+
+      const asset = response.assets[0];
+      if (!asset.uri) {
+        setIsCreateModalVisible(false);
+        setSelectedImage(null);
+        return;
+      }
+
+      const image = {
+        uri: asset.uri,
+        fileName: asset.fileName,
+        type: asset.type,
+        width: asset.width,
+        height: asset.height,
+      };
+
+      setSelectedImage(image);
+      setIsCreateModalVisible(true);
+    },
+    [],
+  );
+  const handleSelectFromGallery = useCallback(() => {
+    launchImageLibrary(
+      {
+        mediaType: 'photo',
+        selectionLimit: 1,
+      },
+      handleImagePicked,
+    );
+   
+  }, [ handleImagePicked]);
+
+  const handleTakePhoto = useCallback(async () => {
+    launchCamera(
+      {
+        mediaType: 'photo',
+      },
+      handleImagePicked,
+    );
+  
+  }, [ handleImagePicked]);
   return (
     <View className="flex-1">
       {/* 처음 화면 (애니메이션 완료 후 렌더링 취소) */}
@@ -273,13 +326,14 @@ export const MapScreen = () => {
       <Animated.View 
         className="flex-1 absolute inset-0"
         style={{ 
-          opacity: animationProgress, // progress가 0→1일 때 opacity도 0→1
+          opacity: animationProgress,
           zIndex: 1001,
-          pointerEvents: 'box-none', // 컨트롤 영역이 아닌 부분은 터치 통과
+          pointerEvents: 'box-none',
         }}
       >
-            {/* 뒤로가기 버튼 (왼쪽 위) */}
+            {/* 뒤로가기 버튼 (왼쪽 위), 저장버튼(오른쪽 아래) */}
             {hasStarted && (
+              <>
               <View 
                 className="absolute"
                 style={{ 
@@ -292,6 +346,16 @@ export const MapScreen = () => {
                   <ChevronLeft width={24} height={24} color="black" />
                 </LiquidGlassButton>
               </View>
+              {/* 이미지 선택 버튼 */}
+            <View className="flex-row gap-2" style={{position: 'absolute', right: 16, bottom: insets.bottom, zIndex: 1002}}>
+              <LiquidGlassButton onPress={handleTakePhoto} size="large">
+                <CameraIcon width={24} height={24} color="black" />
+              </LiquidGlassButton>
+                <LiquidGlassButton onPress={handleSelectFromGallery} size="large">
+                <ImageIcon width={24} height={24} color="black" />
+              </LiquidGlassButton>
+           </View>
+              </>
             )}
             <MapControls
               onZoomIn={handleZoomIn}
@@ -375,6 +439,17 @@ export const MapScreen = () => {
         onClose={() => {
           setIsDetailModalVisible(false);
           setSelectedRecord(null);
+        }}
+      />
+
+      {/* 이미지 선택 후 기록 생성 모달 */}
+      <RecordModal
+        visible={isCreateModalVisible}
+        mode="create"
+        image={selectedImage}
+        onClose={() => {
+          setIsCreateModalVisible(false);
+          setSelectedImage(null);
         }}
       />
      

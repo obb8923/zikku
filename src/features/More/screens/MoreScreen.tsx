@@ -1,25 +1,17 @@
-import { View, TouchableOpacity, Platform } from 'react-native';
+import { View, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { FlashList, type ListRenderItem } from '@shopify/flash-list';
-import type { MoreStackParamList } from '@nav/stack/MoreStack';
-import { Background } from '@components/Background';
-import { Text } from '@components/Text';
-import { BackButton } from '@components/BackButton';
-import { LiquidGlassView } from '@components/LiquidGlassView';
-import {AuthButton} from '@/features/More/componentes/AuthButton';
-import {BUTTON_SIZE_MEDIUM} from '@/shared/constants/NORMAL';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import type { MapStackParamList } from '@nav/stack/MapStack';
+import { Background, LiquidGlassButton, Text } from '@components/index';
+import { MoreListItem, type MoreItem } from '../components/MoreListItem';
+import { AuthButton } from '@/features/More/componentes/AuthButton';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/shared/stores/authStore';
-import { TAB_NAME } from '@constants/TAB_NAV_OPTIONS';
 import { COLORS } from '@constants/COLORS';
+import XIcon from '@assets/svgs/X.svg';
 
-type MoreItem = {
-  id: string;
-  title: string;
-  description?: string;
-};
+type MoreScreenNavigationProp = NativeStackNavigationProp<MapStackParamList, 'More'>;
 
 type MoreGroup = {
   id: string;
@@ -39,22 +31,18 @@ const MOCK_MORE_GROUPS: MoreGroup[] = [
       {
         id: 'language',
         title: '언어',
-        description: '앱에서 사용할 언어를 선택해요',
       },
       {
         id: 'notification',
         title: '알림',
-        description: '푸시 알림을 관리해요',
       },
       {
         id: 'haptic',
         title: '햅틱',
-        description: '진동/햅틱 피드백을 설정해요',
       },
       {
         id: 'type',
         title: '카테고리',
-        description: '지도/테마 카테고리를 선택해요',
       },
     ],
   },
@@ -65,21 +53,18 @@ const MOCK_MORE_GROUPS: MoreGroup[] = [
       {
         id: 'suggest',
         title: '건의하기',
-        description: '원하는 기능이나 개선점을 보내주세요',
       },
       {
         id: 'contact',
         title: '문의하기',
-        description: '궁금한 점을 개발자에게 물어봐요',
       },
       {
         id: 'rate',
-        title: '저희를 응원해주세요! (평점 남기기)',
+        title: '저희를 응원해주세요!',
       },
       {
         id: 'share',
         title: '공유하기',
-        description: '지쿠를 주변 사람들과 나눠요',
       },
     ],
   },
@@ -99,53 +84,10 @@ const MOCK_MORE_GROUPS: MoreGroup[] = [
   },
 ];
 
-type MoreListItemProps = {
-  item: MoreItem;
-  onPress?: (item: MoreItem) => void;
-  isLast?: boolean;
-};
 
-const MoreListItem = ({ item, onPress, isLast }: MoreListItemProps) => {
-  return (
-    <>
-      <TouchableOpacity
-        activeOpacity={0.8}
-        className="w-full py-4"
-        onPress={() => onPress?.(item)}
-      >
-        <View className="w-full">
-          <Text
-            type="body1"
-            text={item.title}
-            style={{ fontWeight: '600', color: COLORS.TEXT_COMPONENT }}
-          />
-          {item.description && (
-            <Text
-              type="body2"
-              text={item.description}
-              style={{ marginTop: 4, color: COLORS.TEXT_2 }}
-            />
-          )}
-        </View>
-      </TouchableOpacity>
-      {!isLast && (
-        <View
-          style={{
-            height: 1,
-            backgroundColor: COLORS.TEXT_2,
-            opacity: 0.1,
-            marginLeft: 0,
-          }}
-        />
-      )}
-    </>
-  );
-};
-
-type MoreScreenNavigationProp = NativeStackNavigationProp<MoreStackParamList, 'More'>;
 
 export const MoreScreen = () => {
-  const stackNavigation = useNavigation<MoreScreenNavigationProp>();
+  const navigation = useNavigation<MoreScreenNavigationProp>();
   const insets = useSafeAreaInsets();
   const handleAppleLogin = useAuthStore((s) => s.handleAppleLogin);
   const handleGoogleLogin = useAuthStore((s) => s.handleGoogleLogin);
@@ -163,9 +105,9 @@ export const MoreScreen = () => {
         {/* 그룹 헤더 */}
         <View className="mb-3 px-2">
           <Text
-            type="title3"
+            type="body1"
             text={item.title}
-            style={{ fontWeight: '600', color: COLORS.TEXT_2 }}
+            className="font-semibold text-text-2"
           />
         </View>
         
@@ -192,21 +134,24 @@ export const MoreScreen = () => {
     }
   };
 
-  const handleBackPress = () => {
-  };
+
 
   return (
-    <Background type="white" isStatusBarGap>
-      <View className="flex-1">
-        <BackButton onPress={handleBackPress} />
-        <View className="flex-1 px-8">
+    <Background isStatusBarGap={false}>
+      <View className="pt-4 px-6 mb-4 flex-row justify-between items-center">
+          <Text type="title3" text="더보기" style={{ fontWeight: '600', color: COLORS.TEXT_2 }} />
+          <LiquidGlassButton size="small" onPress={() => navigation.goBack()}>
+            <XIcon width={20} height={20} color={COLORS.TEXT} />
+          </LiquidGlassButton>
+      </View>
+        <View className="flex-1 px-6">
           <FlashList
             data={MOCK_MORE_GROUPS}
             renderItem={renderItem}
             keyExtractor={(item) => item.id}
             contentContainerStyle={{
-              paddingTop: BUTTON_SIZE_MEDIUM + 24,
-              paddingBottom: insets.bottom + 24,
+              paddingVertical: 16,
+              paddingBottom: insets.bottom + 16,
             }}
             ListHeaderComponent={() => (
               <View className="mb-6 gap-6">
@@ -216,40 +161,10 @@ export const MoreScreen = () => {
                     <AuthButton onPress={handleLoginPress} />
                   </View>
                 )}
-                {/* MYINFO Section */}
-                {isLoggedIn && (
-                  <View className="w-full items-center justify-center gap-4">
-                    <Text type="title1" text="MYINFO" />
-                    <TouchableOpacity
-                      onPress={() => stackNavigation.navigate('MyInfo')}
-                      className="w-full"
-                      activeOpacity={0.8}
-                    >
-                      <LiquidGlassView
-                        borderRadius={12}
-                        className="w-full"
-                        innerStyle={{
-                          paddingVertical: 16,
-                          paddingHorizontal: 16,
-                        }}
-                      >
-                        <View className="w-full items-center">
-                          <Text type="body1" text="내 정보 보기" />
-                        </View>
-                      </LiquidGlassView>
-                    </TouchableOpacity>
-                  </View>
-                )}
-                <Text
-                  type="title3"
-                  text="더보기"
-                  style={{ fontWeight: '600', color: COLORS.TEXT_2 }}
-                />
               </View>
             )}
           />
         </View>
-      </View>
     </Background>
   );
 };
