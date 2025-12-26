@@ -49,21 +49,21 @@ export const MapInitialOverlay: React.FC<MapInitialOverlayProps> = ({
             textStyle={{ color: 'black' ,fontWeight: 'bold'}}
           />
         {/* tab button area */}
-        <View className="w-full gap-4">
+        <View className="w-full gap-4 flex-row justify-between">
           <LiquidGlassTextButton
             text="기록"
             onPress={onArchivePress || (() => {})}
             size="large"
-            style={{ width: '100%' }}
-            tintColor="white"
+            style={{ flex: 1 }}
+            tintColor="rgba(255,255,255,0.2)"
             textStyle={{ color: 'black', fontWeight: 'bold' }}
           />
           <LiquidGlassTextButton
             text="설정"
             onPress={onMorePress || (() => {})}
             size="large"
-            style={{ width: '100%' }}
-            tintColor="white"
+            style={{flex: 1}}
+            tintColor="rgba(255,255,255,0.2)"
             textStyle={{ color: 'black', fontWeight: 'bold' }}
           />
         </View>
