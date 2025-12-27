@@ -1,14 +1,18 @@
 import { create } from 'zustand';
 import { supabase } from '@libs/supabase/supabase.ts'; // supabase 클라이언트 경로 확인 필요
 import { Alert, Platform } from 'react-native';
+import { getUserProfile, type UserProfile } from '@libs/supabase/userProfileService';
 
 interface AuthState {
   isLoggedIn: boolean;
   isLoading: boolean;
   userId: string | null;
+  userProfile: UserProfile | null;
   checkLoginStatus: () => Promise<void>;
+  fetchUserProfile: () => Promise<void>;
   login: () => void;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<boolean>;
   handleGoogleLogin: () => Promise<void>;
   handleAppleLogin: () => Promise<void>;
   handleEmailLogin: (email: string, password: string) => Promise<boolean>;
@@ -18,6 +22,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoggedIn: false,
   isLoading: false,
   userId: null,
+  userProfile: null,
   checkLoginStatus: async () => {
     set({ isLoading: true });
     try {
@@ -30,20 +35,46 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (__DEV__) {
           console.log('[AuthStore] isLoggedIn set to true in checkLoginStatus()');
         }
+        // 로그인 상태 확인 후 프로필 가져오기
+        await get().fetchUserProfile();
       } else {
         set({ 
           isLoggedIn: false,
-          userId: null 
+          userId: null,
+          userProfile: null
         });
       }
     } catch (error) {
       console.error('Error checking login status:', error);
       set({ 
         isLoggedIn: false,
-        userId: null 
+        userId: null,
+        userProfile: null
       });
     } finally {
       set({ isLoading: false });
+    }
+  },
+  fetchUserProfile: async () => {
+    try {
+      const profile = await getUserProfile();
+      
+      // 프로필을 가져오지 못한 경우 로그아웃 처리
+      if (!profile) {
+        console.log('[AuthStore] 프로필을 가져오지 못함. 로그아웃 처리합니다.');
+        await get().logout();
+        return;
+      }
+      
+      set({ userProfile: profile });
+      if (__DEV__) {
+        console.log('[AuthStore] User profile fetched:', profile);
+      }
+    } catch (error) {
+      console.error('[AuthStore] Error fetching user profile:', error);
+      // 에러 발생 시에도 로그아웃 처리
+      console.log('[AuthStore] 프로필 가져오기 에러 발생. 로그아웃 처리합니다.');
+      await get().logout();
     }
   },
   login: () => {
@@ -55,19 +86,66 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: async () => {
     set({ isLoading: true });
     try {
+      // Supabase 연결 끊기
       await supabase.auth.signOut();
       set({
         isLoggedIn: false,
         userId: null,
+        userProfile: null,
       });
+      if (__DEV__) {
+        console.log('[AuthStore] 로그아웃 완료');
+      }
     } catch (error) {
       console.error('Error logging out:', error);
+      // 에러가 발생해도 로그아웃 상태로 설정
       set({ 
         isLoggedIn: false,
-        userId: null 
+        userId: null,
+        userProfile: null,
       });
     } finally {
       set({ isLoading: false });
+    }
+  },
+  deleteAccount: async () => {
+    set({ isLoading: true });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        Alert.alert('오류', '사용자 정보를 찾을 수 없습니다.');
+        set({ isLoading: false });
+        return false;
+      }
+
+      // users 테이블에서 사용자 데이터 삭제
+      const { error: deleteError } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', user.id);
+
+      if (deleteError) {
+        console.error('users 테이블 삭제 오류:', deleteError);
+        Alert.alert('오류', '사용자 데이터 삭제 중 오류가 발생했습니다.');
+        set({ isLoading: false });
+        return false;
+      }
+
+      // 로그아웃 처리 (Auth 계정은 서버에서 처리하거나 별도 API 필요)
+      await supabase.auth.signOut();
+      set({
+        isLoggedIn: false,
+        userId: null,
+        userProfile: null,
+      });
+      set({ isLoading: false });
+      return true;
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      Alert.alert('오류', '회원 탈퇴 중 오류가 발생했습니다.');
+      set({ isLoading: false });
+      return false;
     }
   },
   handleGoogleLogin: async () => {
@@ -123,6 +201,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           if (__DEV__) {
             console.log('[AuthStore] isLoggedIn set to true in handleGoogleLogin()');
           }
+          // 로그인 성공 후 프로필 가져오기
+          await get().fetchUserProfile();
         }
       } else {
         console.error('Google ID 토큰을 받지 못했습니다:', userInfo);
@@ -180,6 +260,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (__DEV__) {
           console.log('[AuthStore] isLoggedIn set to true in handleAppleLogin()');
         }
+        // 로그인 성공 후 프로필 가져오기
+        await get().fetchUserProfile();
       }
     } catch (error: any) {
       Alert.alert('Apple 로그인 오류', error.message || '알 수 없는 오류가 발생했습니다.');
@@ -215,6 +297,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (__DEV__) {
           console.log('[AuthStore] isLoggedIn set to true in handleEmailLogin()');
         }
+        // 로그인 성공 후 프로필 가져오기
+        await get().fetchUserProfile();
         
         return true;
       }

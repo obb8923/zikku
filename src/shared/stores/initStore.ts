@@ -43,11 +43,12 @@ export const useAppInitialization = () => {
           }
         }
 
-        // 2. 로그인 상태 확인
+        // 2. 로그인 상태 확인 (프로필도 함께 가져옴)
         if (isMounted) {
           try {
             await checkLoginStatus();
             if (__DEV__) console.log('[useAppInitialization] Login status checked');
+            // checkLoginStatus 내부에서 fetchUserProfile이 호출됨
           } catch (error) {
             if (__DEV__) console.error('[useAppInitialization] Error checking login status:', error);
           }
