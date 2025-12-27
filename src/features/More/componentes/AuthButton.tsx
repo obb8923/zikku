@@ -15,6 +15,7 @@ export const AuthButton = ({ onPress }: { onPress: () => void }) => {
       className="flex-row items-center justify-center bg-white"
       style={{
         minWidth: 150,
+        width: '100%',
         minHeight: BUTTON_SIZE_MEDIUM,
         paddingVertical: 3, // 버튼 높이의 1/10 (30pt * 0.1 = 3pt)
         paddingHorizontal: 12,

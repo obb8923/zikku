@@ -3,8 +3,8 @@ import React from 'react';
 import { StatusBar, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { PortalProvider } from '@gorhom/portal';
-import { AppNavigation } from '@nav/index';
+import { PortalProvider, PortalHost } from '@gorhom/portal';
+import {RootStack} from '@nav/stack/RootStack';
 import { useAppInitialization } from '@stores/initStore';
 
 export default function App() {
@@ -15,12 +15,13 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <PortalProvider>
+
           <View style={{flex:1}}>
             <StatusBar 
               barStyle='light-content' 
               translucent={true}
             />
-            <AppNavigation />
+            <RootStack />
           </View>
         </PortalProvider>
       </SafeAreaProvider>

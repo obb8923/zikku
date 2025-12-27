@@ -24,8 +24,8 @@ const getTypographyStyle = (type: TypographyType): TextStyle => {
     case 'title0':
       return {
         fontFamily: NOTO_SANS_FONT_FAMILY.semibold,
-        fontSize: 48,
-        lineHeight: 48 * 1.1,
+        fontSize: 40,
+        lineHeight: 40 * 1.1,
         letterSpacing: -1.2,
       };
     case 'title1':

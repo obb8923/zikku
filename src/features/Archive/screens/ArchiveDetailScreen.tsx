@@ -10,11 +10,14 @@ import { DEVICE_HEIGHT } from '@constants/NORMAL';
 import { BUTTON_SIZE_MEDIUM } from '@constants/NORMAL';
 import { ZOOM_LEVEL } from '@/features/Map/constants/MAP';
 import { type ChipTypeKey } from '@constants/CHIP';
-import { Chip, LiquidGlassButton, LiquidGlassView, Text, LiquidGlassTextButton } from '@components/index';
+import { Chip, LiquidGlassButton, LiquidGlassView, Text, LiquidGlassTextButton, CategorySelectModal, LiquidGlassInput } from '@components/index';
 import { MapControls } from '@/features/Map/components/MapControls';
-import { deleteRecord } from '@libs/supabase/recordService';
+import { deleteRecord, updateRecord } from '@libs/supabase/recordService';
+import { useAuthStore } from '@stores/authStore';
+import { CHIP_TYPE } from '@constants/CHIP';
 import { Background } from '@components/Background';
 import ChevronLeft from '@assets/svgs/ChevronLeft.svg';
+import { Portal } from '@gorhom/portal';
 
 type ArchiveDetailScreenNavigationProp = NativeStackNavigationProp<MapStackParamList, 'ArchiveDetail'>;
 type ArchiveDetailScreenRouteProp = RouteProp<MapStackParamList, 'ArchiveDetail'>;
@@ -47,7 +50,9 @@ export const ArchiveDetailScreen = () => {
   
   const records = useRecordStore(state => state.records);
   const removeRecordFromStore = useRecordStore(state => state.removeRecord);
+  const updateRecordInStore = useRecordStore(state => state.updateRecord);
   const record = records.find(r => r.id === recordId);
+  const userId = useAuthStore(state => state.userId);
   
   const [note, setNote] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ChipTypeKey | null>(null);
@@ -56,6 +61,7 @@ export const ArchiveDetailScreen = () => {
   const [zoomLevel, setZoomLevel] = useState<number>(ZOOM_LEVEL.DEFAULT);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'photo' | 'location'>('photo');
+  const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
   const mapRef = useRef<MapView>(null);
   
   // Fade 애니메이션 값
@@ -66,18 +72,18 @@ export const ArchiveDetailScreen = () => {
   useEffect(() => {
     if (!record) return;
 
-    setNote(record.memo || '');
-    if (record.category) {
-      setSelectedCategory(getChipTypeFromCategory(record.category));
-    } else {
-      setSelectedCategory(null);
-    }
-
-    const { latitudeDelta, longitudeDelta } = zoomToDelta(ZOOM_LEVEL.DEFAULT);
-    setSelectedLocation({
+    const memo = record.memo || '';
+    const category = record.category ? getChipTypeFromCategory(record.category) : null;
+    const location = {
       latitude: record.latitude,
       longitude: record.longitude,
-    });
+    };
+
+    setNote(memo);
+    setSelectedCategory(category);
+    setSelectedLocation(location);
+
+    const { latitudeDelta, longitudeDelta } = zoomToDelta(ZOOM_LEVEL.DEFAULT);
     setMapRegion({
       latitude: record.latitude,
       longitude: record.longitude,
@@ -89,6 +95,11 @@ export const ArchiveDetailScreen = () => {
   // 지도 region 변경 핸들러
   const handleRegionChangeComplete = useCallback((region: Region) => {
     setMapRegion(region);
+    // 위치 업데이트
+    setSelectedLocation({
+      latitude: region.latitude,
+      longitude: region.longitude,
+    });
     // zoom level 계산
     const calculatedZoom = Math.round(Math.log2(360 / region.latitudeDelta));
     setZoomLevel(calculatedZoom);
@@ -160,6 +171,35 @@ export const ArchiveDetailScreen = () => {
     }
   }, [activeTab, photoTabOpacity, locationTabOpacity]);
 
+  // 저장
+  const handleSave = useCallback(async () => {
+    if (!record || !selectedCategory || !selectedLocation || !userId) {
+      Alert.alert('오류', '필수 정보가 누락되었습니다.');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const category = CHIP_TYPE[selectedCategory];
+      const updatedRecord = await updateRecord(record.id, {
+        latitude: selectedLocation.latitude,
+        longitude: selectedLocation.longitude,
+        category,
+        memo: note || null,
+      });
+
+      // 로컬 스토어 업데이트
+      updateRecordInStore(record.id, updatedRecord);
+
+      Alert.alert('성공', '레코드가 수정되었습니다.');
+    } catch (error: any) {
+      console.error('수정 오류:', error);
+      Alert.alert('오류', error.message || '레코드 수정에 실패했습니다.');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [record, selectedCategory, selectedLocation, note, userId, updateRecordInStore]);
+
   // 삭제 버튼
   const handlePressDelete = useCallback(() => {
     if (!record) {
@@ -212,12 +252,19 @@ export const ArchiveDetailScreen = () => {
       </Background>
     );
   }
+  useEffect(() => {
+    console.log('isCategoryModalVisible', isCategoryModalVisible);
+
+    return () => {
+    };
+  }, [isCategoryModalVisible]);
 
   const displayImageUri = record?.image_path ?? undefined;
 
   return (
+    <>
     <Background isStatusBarGap={false} isTabBarGap={false}>
-      <View className="flex-1 px-8 relative" style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}>
+      <View className="flex-1 px-8 relative" style={{ paddingTop: 16, paddingBottom: insets.bottom }}>
         {/* 뒤로가기 버튼, 액티브 상태 버튼 */}
         <View className="flex-row gap-2 w-full h-auto mb-2 justify-between">
           <View style={{ zIndex: 10, width: BUTTON_SIZE_MEDIUM, height: BUTTON_SIZE_MEDIUM }}>
@@ -264,7 +311,9 @@ export const ArchiveDetailScreen = () => {
 
             {/* 칩 영역 */}
             <View className="items-center justify-center w-full h-1/12 gap-8">
-              <Chip chipType={selectedCategory} interactive={false} />
+              <TouchableOpacity onPress={() => setIsCategoryModalVisible(true)} disabled={isSaving}>
+                <Chip chipType={selectedCategory} interactive={true} />
+              </TouchableOpacity>
             </View>
           </Animated.View>
 
@@ -279,22 +328,14 @@ export const ArchiveDetailScreen = () => {
             <View className="flex-1 justify-between py-12">
               {/* 메모 영역 */}
               <View className="w-full mt-4">
-                <LiquidGlassView
-                  borderRadius={16}
-                  interactive={false}
-                  innerStyle={{
-                    paddingHorizontal: 16,
-                    paddingVertical: 12,
-                    minHeight: 100,
-                    justifyContent: 'flex-start',
-                  }}
-                >
-                  <Text
-                    type="body2"
-                    text={note || '메모가 없습니다.'}
-                    style={{ textAlignVertical: 'top' as any }}
-                  />
-                </LiquidGlassView>
+                <LiquidGlassInput
+                  value={note}
+                  onChangeText={setNote}
+                  placeholder="메모를 입력하세요"
+                  multiline
+                  style={{ minHeight: 100, textAlignVertical: 'top' }}
+                  editable={!isSaving}
+                />
               </View>
 
               {/* 지도 영역 */}
@@ -307,8 +348,8 @@ export const ArchiveDetailScreen = () => {
                     onRegionChangeComplete={handleRegionChangeComplete}
                     showsUserLocation={false}
                     showsMyLocationButton={false}
-                    scrollEnabled={true}
-                    zoomEnabled={true}
+                    scrollEnabled={!isSaving}
+                    zoomEnabled={!isSaving}
                     pitchEnabled={false}
                     rotateEnabled={false}
                     mapType="mutedStandard"
@@ -342,25 +383,43 @@ export const ArchiveDetailScreen = () => {
         {/* 버튼 영역 */}
         <View className="w-full items-center justify-center pb-4">
           <View className="flex-row gap-4">
-            <LiquidGlassTextButton
-              onPress={() => {
-                // TODO: 수정 기능 구현
-                navigation.goBack();
-              }}
-              size="medium"
-              text="수정"
-              disabled={isSaving}
-            />
-            <LiquidGlassTextButton
+          <LiquidGlassTextButton
               onPress={handlePressDelete}
               size="medium"
               text="삭제"
               disabled={isSaving}
             />
+            <LiquidGlassTextButton
+              onPress={handleSave}
+              size="medium"
+              text="저장"
+              disabled={isSaving}
+              loading={isSaving}
+            />
+          
           </View>
         </View>
       </View>
     </Background>
+    <Portal hostName="root">
+    <View className="absolute inset-0 items-center justify-center">
+      <View className="w-full h-1/2 bg-red-500">
+
+      </View>
+
+    </View>
+    </Portal>
+    {/* 카테고리 선택 모달 - Portal을 사용하므로 Background 밖에 배치 */}
+    <CategorySelectModal
+      visible={isCategoryModalVisible}
+      onClose={() => setIsCategoryModalVisible(false)}
+      onSelect={(category) => {
+        setSelectedCategory(category);
+        setIsCategoryModalVisible(false);
+      }}
+      disabled={isSaving}
+    />
+    </>
   );
 };
 

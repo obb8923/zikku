@@ -7,17 +7,18 @@ export type LiquidGlassInputProps = TextInputProps & {
   containerStyle?: StyleProp<ViewStyle>;
 };
 
-export const LiquidGlassInput = ({
+export const LiquidGlassInput = React.forwardRef<TextInput, LiquidGlassInputProps>(({
   borderRadius = 16,
   containerStyle,
   style,
   ...textInputProps
-}: LiquidGlassInputProps) => {
+}, ref) => {
   return (
     <LiquidGlassView 
     borderRadius={borderRadius} 
     style={containerStyle}>
       <TextInput
+        ref={ref}
         {...textInputProps}
         style={[
           {
@@ -33,5 +34,5 @@ export const LiquidGlassInput = ({
       />
     </LiquidGlassView>
   );
-};
+});
 

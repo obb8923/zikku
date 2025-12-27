@@ -1,10 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Image, Animated } from 'react-native';
+import { View, Image, Animated, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { MapStackParamList } from '@nav/stack/MapStack';
 import { usePermissionStore } from '@stores/permissionStore';
+import { useAuthStore } from '@stores/authStore';
 import MapView, { Region, Polyline, Marker } from 'react-native-maps';
 import { useLocationStore } from '@stores/locationStore';
 import { useTraceStore } from '@stores/traceStore';
-import { useRecordStore, Record } from '@stores/recordStore';
+import { useRecordStore } from '@stores/recordStore';
 import { useHasStarted, useSetHasStarted } from '@stores/initialScreenStore';
 import { MapDebugControls } from '../components/MapDebugControls';
 import { MapControls } from '../components/MapControls';
@@ -19,9 +23,14 @@ import ChevronLeft from '@assets/svgs/ChevronLeft.svg';
 import { launchCamera, launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
 import CameraIcon from '@assets/svgs/Camera.svg';
 import ImageIcon from '@assets/svgs/Image.svg';
+
+type MapScreenNavigationProp = NativeStackNavigationProp<MapStackParamList, 'Map'>;
+
 export const MapScreen = () => {
+  const navigation = useNavigation<MapScreenNavigationProp>();
   const requestLocationPermission = usePermissionStore((s) => s.requestLocationPermission);
   const locationPermission = usePermissionStore((s) => s.locationPermission);
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const mapRef = useRef<MapView>(null);
   const [currentRegion, setCurrentRegion] = useState<Region | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(13);
@@ -34,9 +43,6 @@ export const MapScreen = () => {
   const stopTracking = useTraceStore(state => state.stopTracking);
   // Record store (로컬 스토어에서만 읽기)
   const records = useRecordStore(state => state.records);
-  // Record detail modal
-  const [selectedRecord, setSelectedRecord] = useState<Record | null>(null);
-  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
   // Record create modal (이미지 선택 후)
   const [selectedImage, setSelectedImage] = useState<{ uri: string; fileName?: string; type?: string; width?: number; height?: number } | null>(null);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -285,6 +291,21 @@ export const MapScreen = () => {
     [],
   );
   const handleSelectFromGallery = useCallback(() => {
+    if (!isLoggedIn) {
+      Alert.alert(
+        '로그인 필요',
+        '사진을 선택하려면 로그인이 필요합니다.',
+        [
+          { text: '취소', style: 'cancel' },
+          { 
+            text: '로그인하기', 
+            onPress: () => navigation.navigate('More'),
+            style: 'default'
+          }
+        ]
+      );
+      return;
+    }
     launchImageLibrary(
       {
         mediaType: 'photo',
@@ -293,9 +314,24 @@ export const MapScreen = () => {
       handleImagePicked,
     );
    
-  }, [ handleImagePicked]);
+  }, [handleImagePicked, isLoggedIn, navigation]);
 
   const handleTakePhoto = useCallback(async () => {
+    if (!isLoggedIn) {
+      Alert.alert(
+        '로그인 필요',
+        '사진을 촬영하려면 로그인이 필요합니다.',
+        [
+          { text: '취소', style: 'cancel' },
+          { 
+            text: '로그인하기', 
+            onPress: () => navigation.navigate('More'),
+            style: 'default'
+          }
+        ]
+      );
+      return;
+    }
     launchCamera(
       {
         mediaType: 'photo',
@@ -303,7 +339,7 @@ export const MapScreen = () => {
       handleImagePicked,
     );
   
-  }, [ handleImagePicked]);
+  }, [handleImagePicked, isLoggedIn, navigation]);
   return (
     <View className="flex-1">
       {/* 처음 화면 (애니메이션 완료 후 렌더링 취소) */}
@@ -406,8 +442,7 @@ export const MapScreen = () => {
               }}
               anchor={{ x: 0.5, y: 1 }}
               onPress={() => {
-                setSelectedRecord(record);
-                setIsDetailModalVisible(true);
+                navigation.navigate('ArchiveDetail', { recordId: record.id });
               }}
             >
               <View 
@@ -428,24 +463,10 @@ export const MapScreen = () => {
       </MapView>
 
       
-      
-     
-     
-      {/* 마커 클릭 시 기록 상세 모달 */}
-      <RecordModal
-        visible={isDetailModalVisible}
-        mode="detail"
-        record={selectedRecord}
-        onClose={() => {
-          setIsDetailModalVisible(false);
-          setSelectedRecord(null);
-        }}
-      />
 
       {/* 이미지 선택 후 기록 생성 모달 */}
       <RecordModal
         visible={isCreateModalVisible}
-        mode="create"
         image={selectedImage}
         onClose={() => {
           setIsCreateModalVisible(false);
