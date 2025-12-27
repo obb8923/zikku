@@ -43,6 +43,9 @@ export const MapStack = () => {
               name="ArchiveDetail" 
               component={ArchiveDetailScreen}
               options={{
+                presentation: 'modal',
+                animation: 'slide_from_bottom',
+                gestureEnabled: true,
                 headerShown: false,
               }}
             />

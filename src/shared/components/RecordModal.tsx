@@ -16,6 +16,8 @@ import { saveRecord } from '@libs/supabase/recordService';
 import PlusSmallIcon from '@assets/svgs/PlusSmall.svg';
 import MarkerPinIcon from '@assets/svgs/MarkerPin.svg';
 import {LiquidGlassTextButton} from '@components/index';
+import { zoomToDelta } from '@/features/Map/utils/mapUtils';
+
 interface ImageData {
   uri: string;
   fileName?: string;
@@ -29,13 +31,6 @@ interface RecordModalProps {
   onClose: () => void;
   image?: ImageData | null;
 }
-
-// zoom 레벨을 delta로 변환하는 유틸리티 함수
-const zoomToDelta = (zoom: number): { latitudeDelta: number; longitudeDelta: number } => {
-  const latitudeDelta = 360 / Math.pow(2, zoom);
-  const longitudeDelta = latitudeDelta; 
-  return { latitudeDelta, longitudeDelta };
-};
 
 export const RecordModal = ({
   visible,

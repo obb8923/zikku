@@ -8,7 +8,7 @@ import { Background } from '@components/Background';
 import { Text } from '@components/Text';
 import { useRecordStore, Record } from '@stores/recordStore';
 import { LiquidGlassButton} from '@components/index';
-import { CHIP_TYPE, CHIP_TINT_COLORS, type ChipTypeKey } from '@constants/CHIP';
+import { CHIP_TYPE, CHIP_TINT_COLORS, type ChipTypeKey, getChipTypeFromCategory } from '@constants/CHIP';
 import { LiquidGlassImage } from '@components/index';
 import { COLORS } from '@constants/COLORS';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -55,19 +55,6 @@ export const ArchiveScreen = () => {
 
     return groupData;
   }, [records]);
-
-  // category를 ChipTypeKey로 변환
-  const getChipTypeFromCategory = (category: string | null | undefined): ChipTypeKey => {
-    if (!category) return 'LANDSCAPE';
-    const categoryMap: { [key: string]: ChipTypeKey } = {
-      '풍경': 'LANDSCAPE',
-      '장소': 'PLACE',
-      '생명': 'LIFE',
-      '발견': 'DISCOVERY',
-      '함께': 'TOGETHER',
-    };
-    return categoryMap[category] || 'LANDSCAPE';
-  };
 
   // 아이템 렌더링
   const renderItem: ListRenderItem<ListItem> = ({ item }) => {

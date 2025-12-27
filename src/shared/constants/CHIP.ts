@@ -42,3 +42,16 @@ export const CHIP_TINT_COLORS = {
   [CHIP_TYPE.TOGETHER]: 'rgba(20, 220, 110, 0.22)', // 초록색
 } as const;
 
+// category(string)를 ChipTypeKey로 변환하는 유틸리티 함수
+export const getChipTypeFromCategory = (category: string | null | undefined): ChipTypeKey => {
+  if (!category) return 'LANDSCAPE';
+  const categoryMap: { [key: string]: ChipTypeKey } = {
+    '풍경': 'LANDSCAPE',
+    '장소': 'PLACE',
+    '생명': 'LIFE',
+    '발견': 'DISCOVERY',
+    '함께': 'TOGETHER',
+  };
+  return categoryMap[category] || 'LANDSCAPE';
+};
+

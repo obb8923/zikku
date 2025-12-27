@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Image, Alert, TouchableOpacity, Animated } from 'react-native';
+import { View, Image, Alert, TouchableOpacity, Animated, Keyboard } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MapStackParamList } from '@nav/stack/MapStack';
@@ -9,38 +9,17 @@ import { useRecordStore } from '@stores/recordStore';
 import { DEVICE_HEIGHT } from '@constants/NORMAL';
 import { BUTTON_SIZE_MEDIUM } from '@constants/NORMAL';
 import { ZOOM_LEVEL } from '@/features/Map/constants/MAP';
-import { type ChipTypeKey } from '@constants/CHIP';
-import { Chip, LiquidGlassButton, LiquidGlassView, Text, LiquidGlassTextButton, CategorySelectModal, LiquidGlassInput } from '@components/index';
+import { type ChipTypeKey, CHIP_TYPE, getChipTypeFromCategory } from '@constants/CHIP';
+import { Chip, LiquidGlassButton, Text, LiquidGlassTextButton, CategorySelectModal, LiquidGlassInput } from '@components/index';
 import { MapControls } from '@/features/Map/components/MapControls';
 import { deleteRecord, updateRecord } from '@libs/supabase/recordService';
 import { useAuthStore } from '@stores/authStore';
-import { CHIP_TYPE } from '@constants/CHIP';
 import { Background } from '@components/Background';
 import ChevronLeft from '@assets/svgs/ChevronLeft.svg';
-import { Portal } from '@gorhom/portal';
+import { zoomToDelta } from '@/features/Map/utils/mapUtils';
 
 type ArchiveDetailScreenNavigationProp = NativeStackNavigationProp<MapStackParamList, 'ArchiveDetail'>;
 type ArchiveDetailScreenRouteProp = RouteProp<MapStackParamList, 'ArchiveDetail'>;
-
-// zoom 레벨을 delta로 변환하는 유틸리티 함수
-const zoomToDelta = (zoom: number): { latitudeDelta: number; longitudeDelta: number } => {
-  const latitudeDelta = 360 / Math.pow(2, zoom);
-  const longitudeDelta = latitudeDelta; 
-  return { latitudeDelta, longitudeDelta };
-};
-
-// category(string)를 ChipTypeKey로 변환
-const getChipTypeFromCategory = (category: string | null | undefined): ChipTypeKey => {
-  if (!category) return 'LANDSCAPE';
-  const categoryMap: { [key: string]: ChipTypeKey } = {
-    '풍경': 'LANDSCAPE',
-    '장소': 'PLACE',
-    '생명': 'LIFE',
-    '발견': 'DISCOVERY',
-    '함께': 'TOGETHER',
-  };
-  return categoryMap[category] || 'LANDSCAPE';
-};
 
 export const ArchiveDetailScreen = () => {
   const navigation = useNavigation<ArchiveDetailScreenNavigationProp>();
@@ -171,10 +150,34 @@ export const ArchiveDetailScreen = () => {
     }
   }, [activeTab, photoTabOpacity, locationTabOpacity]);
 
+  // 변경사항 확인
+  const hasChanges = useCallback(() => {
+    if (!record || !selectedCategory || !selectedLocation) return false;
+
+    const originalCategory = record.category ? getChipTypeFromCategory(record.category) : null;
+    const originalMemo = record.memo || '';
+    const originalLatitude = record.latitude;
+    const originalLongitude = record.longitude;
+
+    const categoryChanged = originalCategory !== selectedCategory;
+    const memoChanged = originalMemo !== note;
+    const locationChanged = 
+      Math.abs(originalLatitude - selectedLocation.latitude) > 0.0001 ||
+      Math.abs(originalLongitude - selectedLocation.longitude) > 0.0001;
+
+    return categoryChanged || memoChanged || locationChanged;
+  }, [record, selectedCategory, selectedLocation, note]);
+
   // 저장
   const handleSave = useCallback(async () => {
     if (!record || !selectedCategory || !selectedLocation || !userId) {
       Alert.alert('오류', '필수 정보가 누락되었습니다.');
+      return;
+    }
+
+    // 변경사항이 없으면 바로 닫기
+    if (!hasChanges()) {
+      navigation.goBack();
       return;
     }
 
@@ -191,14 +194,14 @@ export const ArchiveDetailScreen = () => {
       // 로컬 스토어 업데이트
       updateRecordInStore(record.id, updatedRecord);
 
-      Alert.alert('성공', '레코드가 수정되었습니다.');
+      // 저장 성공 후 화면 닫기
+      navigation.goBack();
     } catch (error: any) {
       console.error('수정 오류:', error);
       Alert.alert('오류', error.message || '레코드 수정에 실패했습니다.');
-    } finally {
       setIsSaving(false);
     }
-  }, [record, selectedCategory, selectedLocation, note, userId, updateRecordInStore]);
+  }, [record, selectedCategory, selectedLocation, note, userId, updateRecordInStore, hasChanges, navigation]);
 
   // 삭제 버튼
   const handlePressDelete = useCallback(() => {
@@ -333,6 +336,9 @@ export const ArchiveDetailScreen = () => {
                   onChangeText={setNote}
                   placeholder="메모를 입력하세요"
                   multiline
+                  returnKeyType="done"
+                  onSubmitEditing={() => Keyboard.dismiss()}
+                  blurOnSubmit={true}
                   style={{ minHeight: 100, textAlignVertical: 'top' }}
                   editable={!isSaving}
                 />
@@ -401,14 +407,6 @@ export const ArchiveDetailScreen = () => {
         </View>
       </View>
     </Background>
-    <Portal hostName="root">
-    <View className="absolute inset-0 items-center justify-center">
-      <View className="w-full h-1/2 bg-red-500">
-
-      </View>
-
-    </View>
-    </Portal>
     {/* 카테고리 선택 모달 - Portal을 사용하므로 Background 밖에 배치 */}
     <CategorySelectModal
       visible={isCategoryModalVisible}
