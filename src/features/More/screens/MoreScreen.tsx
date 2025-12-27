@@ -148,11 +148,11 @@ export const MoreScreen = () => {
           title: '내 정보',
           handler: handlePersonalInfo,
         },
-        {
-          id: 'language',
-          title: '언어',
-          handler: handleLanguage,
-        },
+        // {
+        //   id: 'language',
+        //   title: '언어',
+        //   handler: handleLanguage,
+        // },
         // {
         //   id: 'notification',
         //   title: '알림',
@@ -184,11 +184,11 @@ export const MoreScreen = () => {
           title: '문의하기',
           handler: handleContact,
         },
-        {
-          id: 'rate',
-          title: '저희를 응원해주세요!',
-          handler: handleRate,
-        },
+        // {
+        //   id: 'rate',
+        //   title: '저희를 응원해주세요!',
+        //   handler: handleRate,
+        // },
         // {
         //   id: 'share',
         //   title: '공유하기',

@@ -1,16 +1,18 @@
-import { View, ScrollView, Alert, Image, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, ScrollView, Alert, Image, TouchableOpacity, TextInput } from 'react-native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MapStackParamList } from '@nav/stack/MapStack';
-import { Background, LiquidGlassInput, LiquidGlassTextButton } from '@components/index';
+import { Background, LiquidGlassTextButton, LiquidGlassInput } from '@components/index';
 import { Text } from '@components/Text';
 import { LiquidGlassButton } from '@components/LiquidGlassButton';
 import { COLORS } from '@constants/COLORS';
 import XIcon from '@assets/svgs/X.svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/shared/stores/authStore';
-import { useEffect, useState } from 'react';
-import { updateUserProfile, type UserProfile } from '@/shared/libs/supabase/userProfileService';
+import { useEffect, useState, useRef } from 'react';
+import { updateUserProfile, uploadAvatarImage, type UserProfile, type ImageData } from '@/shared/libs/supabase/userProfileService';
+import { launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
+import { usePermissionStore } from '@/shared/stores/permissionStore';
 
 type MyInfoScreenNavigationProp = NativeStackNavigationProp<MapStackParamList, 'MyInfo'>;
 
@@ -19,37 +21,121 @@ export const MyInfoScreen = () => {
   const insets = useSafeAreaInsets();
   const userProfile = useAuthStore((s) => s.userProfile);
   const fetchUserProfile = useAuthStore((s) => s.fetchUserProfile);
-  const [isEditing, setIsEditing] = useState(false);
+  const userId = useAuthStore((s) => s.userId);
   const [isSaving, setIsSaving] = useState(false);
+  const [nicknameValue, setNicknameValue] = useState('');
+  const [selectedAvatarUri, setSelectedAvatarUri] = useState<string | null>(null);
+  const [originalNickname, setOriginalNickname] = useState('');
+  const [originalAvatarUrl, setOriginalAvatarUrl] = useState<string | null>(null);
+  const nicknameInputRef = useRef<TextInput>(null);
+  const requestPhotoLibraryPermission = usePermissionStore((s) => s.requestPhotoLibraryPermission);
   
-  // 편집용 상태
-  const [editedProfile, setEditedProfile] = useState<Partial<UserProfile>>({});
-
+  // 원본 상태 초기화
   useEffect(() => {
-    // 스토어의 프로필 정보로 편집 상태 초기화
     if (userProfile) {
-      setEditedProfile(userProfile);
+      const nickname = userProfile.nickname || '';
+      const avatarUrl = userProfile.avatar_url || null;
+      setNicknameValue(nickname);
+      setOriginalNickname(nickname);
+      setOriginalAvatarUrl(avatarUrl);
+      setSelectedAvatarUri(null); // 초기화 시 선택된 아바타 리셋
     }
   }, [userProfile]);
+  
+  // 변경사항 확인
+  const hasChanges = 
+    nicknameValue.trim() !== originalNickname || 
+    selectedAvatarUri !== null;
 
   const handleSave = async () => {
+    if (!hasChanges) {
+      return;
+    }
+
+    if (!nicknameValue.trim()) {
+      Alert.alert('오류', '닉네임을 입력해주세요.');
+      return;
+    }
+
     setIsSaving(true);
-    const success = await updateUserProfile(editedProfile);
-    setIsSaving(false);
-    
-    if (success) {
-      // 스토어의 프로필 정보 갱신
-      await fetchUserProfile();
-      setIsEditing(false);
-      Alert.alert('성공', '프로필이 업데이트되었습니다.');
-    } else {
-      Alert.alert('오류', '프로필 업데이트에 실패했습니다.');
+    try {
+      let avatarUrl = originalAvatarUrl;
+
+      // 아바타가 변경된 경우 업로드
+      if (selectedAvatarUri) {
+        const imageData: ImageData = {
+          uri: selectedAvatarUri,
+          fileName: 'avatar.jpg',
+          type: 'image/jpeg',
+        };
+        avatarUrl = await uploadAvatarImage(imageData);
+      }
+
+      // 프로필 업데이트
+      const success = await updateUserProfile({
+        nickname: nicknameValue.trim(),
+        avatar_url: avatarUrl || undefined,
+      });
+
+      if (success) {
+        await fetchUserProfile();
+        // 원본 상태 업데이트
+        setOriginalNickname(nicknameValue.trim());
+        setOriginalAvatarUrl(avatarUrl);
+        setSelectedAvatarUri(null);
+        Alert.alert('성공', '프로필이 업데이트되었습니다.');
+      } else {
+        Alert.alert('오류', '프로필 업데이트에 실패했습니다.');
+      }
+    } catch (error: any) {
+      console.error('프로필 업데이트 오류:', error);
+      Alert.alert('오류', error.message || '프로필 업데이트에 실패했습니다.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleCancel = () => {
-    setEditedProfile(userProfile || {});
-    setIsEditing(false);
+    // 원본 상태로 복원
+    setNicknameValue(originalNickname);
+    setSelectedAvatarUri(null);
+  };
+
+  const handleAvatarPress = async () => {
+    if (!userId) {
+      Alert.alert('오류', '로그인이 필요합니다.');
+      return;
+    }
+
+    // 권한 확인
+    const hasPermission = await requestPhotoLibraryPermission();
+    if (!hasPermission) {
+      Alert.alert('권한 필요', '사진을 선택하려면 갤러리 접근 권한이 필요합니다.');
+      return;
+    }
+
+    launchImageLibrary(
+      {
+        mediaType: 'photo',
+        selectionLimit: 1,
+        quality: 0.5, // 아바타용으로 품질 낮춤 (0.5 = 50%)
+        maxWidth: 400, // 최대 너비 400px로 제한
+        maxHeight: 400, // 최대 높이 400px로 제한
+      },
+      (response: ImagePickerResponse) => {
+        if (response.didCancel || response.errorCode) {
+          return;
+        }
+
+        const asset = response.assets?.[0];
+        if (!asset?.uri) {
+          return;
+        }
+
+        // 아바타 선택 시 바로 업로드하지 않고, 로컬 URI만 저장
+        setSelectedAvatarUri(asset.uri);
+      }
+    );
   };
 
   const handleLogout = () => {
@@ -67,7 +153,24 @@ export const MyInfoScreen = () => {
           onPress: async () => {
             const logout = useAuthStore.getState().logout;
             await logout();
-            navigation.navigate('Map');
+            // 로그아웃 후 MapStack을 Map 화면으로 리셋 (모든 열려있는 스택 닫기)
+            const parentNavigation = navigation.getParent();
+            if (parentNavigation) {
+              parentNavigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{ name: 'Map' }],
+                })
+              );
+            } else {
+              // parent가 없는 경우 직접 navigate
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{ name: 'Map' }],
+                })
+              );
+            }
           },
         },
       ]
@@ -125,76 +228,80 @@ export const MyInfoScreen = () => {
             <View className="w-full gap-4">
               {/* 아바타 */}
               <View className="w-full items-center">
-                <View className="w-24 h-24 rounded-full bg-gray-200 items-center justify-center overflow-hidden">
-                  {editedProfile.avatar_url ? (
-                    <Image 
-                      source={{ uri: editedProfile.avatar_url }} 
-                      style={{ width: 96, height: 96 }}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <Text type="title2" text={editedProfile.nickname?.charAt(0).toUpperCase() || userProfile?.nickname?.charAt(0).toUpperCase() || 'U'} />
-                  )}
-                </View>
+                <TouchableOpacity
+                  onPress={handleAvatarPress}
+                  disabled={isSaving}
+                  activeOpacity={0.8}
+                >
+                  <View className="w-24 h-24 rounded-full bg-gray-200 items-center justify-center overflow-hidden">
+                    {selectedAvatarUri ? (
+                      <Image 
+                        source={{ uri: selectedAvatarUri }} 
+                        style={{ width: 96, height: 96 }}
+                        resizeMode="cover"
+                      />
+                    ) : userProfile?.avatar_url ? (
+                      <Image 
+                        source={{ uri: userProfile.avatar_url }} 
+                        style={{ width: 96, height: 96 }}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <Text type="title2" text={userProfile?.nickname?.charAt(0).toUpperCase() || 'U'} />
+                    )}
+                  </View>
+                </TouchableOpacity>
+                {selectedAvatarUri && (
+                  <Text type="caption1" text="변경됨" className="mt-2 text-blue-500" />
+                )}
               </View>
 
               {/* 닉네임 */}
               <View className="w-full gap-2">
                 <Text type="body2" text="닉네임" className="text-gray-600" />
-                {isEditing ? (
-                  <LiquidGlassInput
-                    value={editedProfile.nickname || ''}
-                    onChangeText={(text) => setEditedProfile({ ...editedProfile, nickname: text })}
-                    placeholder="닉네임을 입력하세요"
-                  />
-                ) : (
-                  <View className="w-full p-4 rounded-lg bg-gray-50">
-                    <Text type="body1" text={userProfile.nickname || '닉네임 없음'} />
-                  </View>
-                )}
+                <LiquidGlassInput
+                  ref={nicknameInputRef}
+                  value={nicknameValue}
+                  onChangeText={setNicknameValue}
+                  placeholder="닉네임을 입력하세요"
+                  editable={!isSaving}
+                />
               </View>
+
+              {/* 저장/취소 버튼 */}
+              {hasChanges && (
+                <View className="w-full flex-row gap-2 mt-2">
+                  <View className="flex-1">
+                    <LiquidGlassTextButton
+                      text="취소"
+                      onPress={handleCancel}
+                      disabled={isSaving}
+                      size="medium"
+                      tintColor="rgba(255,255,255,0.2)"
+                      textStyle={{ color: 'black', fontWeight: 'bold' }}
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <LiquidGlassTextButton
+                      text={isSaving ? '저장 중...' : '저장'}
+                      onPress={handleSave}
+                      disabled={isSaving || !hasChanges}
+                      size="medium"
+                      tintColor="white"
+                      textStyle={{ color: 'black', fontWeight: 'bold' }}
+                    />
+                  </View>
+                </View>
+              )}
 
               {/* 사용자 코드 (읽기 전용) */}
               <View className="w-full gap-2">
                 <Text type="body2" text="사용자 코드" className="text-gray-600" />
-                <View className="w-full p-4 rounded-lg bg-gray-50">
-                  <Text type="body1" text={userProfile.code || '코드 없음'} />
-                </View>
-              </View>
-
-              {/* 편집/저장 버튼 */}
-              <View className="w-full gap-3 mt-4">
-                {isEditing ? (
-                  <View className="w-full gap-3 flex-row">
-                    <View className="flex-1">
-                      <LiquidGlassTextButton
-                        text="취소"
-                        onPress={handleCancel}
-                        size="large"
-                        tintColor="rgba(255,255,255,0.2)"
-                        textStyle={{ color: 'black', fontWeight: 'bold' }}
-                      />
-                    </View>
-                    <View className="flex-1">
-                      <LiquidGlassTextButton
-                        text={isSaving ? '저장 중...' : '저장'}
-                        onPress={handleSave}
-                        size="large"
-                        tintColor="white"
-                        textStyle={{ color: 'black', fontWeight: 'bold' }}
-                        disabled={isSaving}
-                      />
-                    </View>
-                  </View>
-                ) : (
-                  <LiquidGlassTextButton
-                    text="편집"
-                    onPress={() => setIsEditing(true)}
-                    size="large"
-                    tintColor="white"
-                    textStyle={{ color: 'black', fontWeight: 'bold' }}
-                  />
-                )}
+                <LiquidGlassInput
+                  value={userProfile.code || '코드 없음'}
+                  editable={false}
+                  placeholder="코드 없음"
+                />
               </View>
 
               {/* 로그아웃/회원 탈퇴 버튼 */}

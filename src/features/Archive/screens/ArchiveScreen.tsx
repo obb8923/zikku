@@ -104,8 +104,19 @@ export const ArchiveScreen = () => {
       </View>
       <View className="flex-1">
         {listData.length === 0 ? (
-          <View className="flex-1 items-center justify-center">
-            <Text type="body2" text="기록이 없습니다." style={{ color: 'rgba(0, 0, 0, 0.5)' }} />
+          <View className="flex-1 items-center justify-center px-6">
+            <View className="items-center gap-2">
+              <Text 
+                type="title3" 
+                text="아직 저장된 기억이 없습니다" 
+                className="text-text-2 font-bold"
+              />
+              <Text 
+                type="body2" 
+                text="지도를 통해 새로운 기억을 만들어보세요" 
+                className="text-text-2 text-center"
+              />
+            </View>
           </View>
         ) : (
           <View className="flex-1 px-6">
