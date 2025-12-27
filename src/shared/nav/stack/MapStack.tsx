@@ -4,12 +4,14 @@ import { MoreScreen } from "@features/More/screens/MoreScreen";
 import { ArchiveScreen } from "@features/Archive/screens/ArchiveScreen";
 import { ArchiveDetailScreen } from "@features/Archive/screens/ArchiveDetailScreen";
 import { MyInfoScreen } from "@/features/MyInfo/screens/MyInfoScreen";
+import { WebViewScreen } from "@features/More/screens/WebViewScreen";
 export type MapStackParamList = {
     Map: undefined,
     More: undefined,
     Archive: undefined,
     ArchiveDetail: { recordId: string },
     MyInfo: undefined,
+    WebView: { url: string; title?: string },
 };
 
 const Stack = createNativeStackNavigator<MapStackParamList>();
@@ -50,6 +52,15 @@ export const MapStack = () => {
               }}
             />
             <Stack.Screen name="MyInfo" component={MyInfoScreen} />
+            <Stack.Screen 
+              name="WebView" 
+              component={WebViewScreen}
+              options={{
+                presentation: 'modal',
+                animation: 'slide_from_bottom',
+                gestureEnabled: true,
+              }}
+            />
 
         </Stack.Navigator>
     )

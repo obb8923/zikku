@@ -63,7 +63,7 @@ export const CategorySelectModal = ({
             <View className=" flex-row justify-between items-center mb-4">
             <Text
               type="title3"
-              text="카테고리 선택"
+              text="카테고리"
               style={{textAlign: 'left', color: COLORS.TEXT_COMPONENT }}
             />
             <TouchableOpacity onPress={onClose}>

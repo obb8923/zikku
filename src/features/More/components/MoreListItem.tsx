@@ -8,6 +8,7 @@ import { useHapticFeedback } from '@hooks/useHapticFeedback';
 export type MoreItem = {
   id: string;
   title: string;
+  handler: () => void;
 };
 
 type MoreListItemProps = {
