@@ -5,21 +5,13 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { OnboardingStackParamList } from '@nav/stack/OnboardingStack';
 import { Background, Text, LiquidGlassView } from '@components/index';
 import { useOnboarding } from '@hooks/useOnboarding';
+import { ONBOARDING_IMAGES } from '../constants/images';
 
 type Onboarding2ScreenNavigationProp = NativeStackNavigationProp<OnboardingStackParamList, 'Onboarding2'>;
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BALL_SIZE = SCREEN_WIDTH * 0.4; // 공 크기
 const IMAGE_GAP = 16; // 이미지 간격
-
-const onboardingImages = [
-  require('@assets/pngs/onboarding/1.png'),
-  require('@assets/pngs/onboarding/2.png'),
-  require('@assets/pngs/onboarding/3.png'),
-  require('@assets/pngs/onboarding/4.png'),
-  require('@assets/pngs/onboarding/5.png'),
-  require('@assets/pngs/onboarding/6.png'),
-];
 
 export const Onboarding2Screen = () => {
   const navigation = useNavigation<Onboarding2ScreenNavigationProp>();
@@ -28,7 +20,7 @@ export const Onboarding2Screen = () => {
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
-    const totalWidth = onboardingImages.length * (BALL_SIZE + IMAGE_GAP);
+    const totalWidth = ONBOARDING_IMAGES.length * (BALL_SIZE + IMAGE_GAP);
     
     const runAnimation = () => {
       scrollX.setValue(0);
@@ -83,7 +75,7 @@ export const Onboarding2Screen = () => {
               }}
             >
               {/* 첫 번째 세트 */}
-              {onboardingImages.map((image, index) => (
+              {ONBOARDING_IMAGES.map((image, index) => (
                 <View
                   key={`set1-${index}`}
                   style={{
@@ -121,7 +113,7 @@ export const Onboarding2Screen = () => {
                 </View>
               ))}
               {/* 두 번째 세트 (무한 스크롤을 위해) */}
-              {onboardingImages.map((image, index) => (
+              {ONBOARDING_IMAGES.map((image, index) => (
                 <View
                   key={`set2-${index}`}
                   style={{

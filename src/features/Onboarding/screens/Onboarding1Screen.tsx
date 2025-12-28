@@ -1,9 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Image, Animated, Dimensions, Easing, Platform, TouchableOpacity } from 'react-native';
+import { View, Image, Animated, Dimensions, Easing, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { OnboardingStackParamList } from '@nav/stack/OnboardingStack';
 import {Background,Text,} from '@components/index';
+import { ONBOARDING_IMAGES } from '../constants/images';
+import { preloadOnboardingImages } from '../utils/preloadImages';
 
 type Onboarding1ScreenNavigationProp = NativeStackNavigationProp<OnboardingStackParamList, 'Onboarding1'>;
 
@@ -11,22 +13,18 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const IMAGE_WIDTH = SCREEN_WIDTH * 0.7; // 이미지 너비
 const IMAGE_GAP = 16; // 이미지 간격
 
-const onboardingImages = [
-  require('@assets/pngs/onboarding/1.png'),
-  require('@assets/pngs/onboarding/2.png'),
-  require('@assets/pngs/onboarding/3.png'),
-  require('@assets/pngs/onboarding/4.png'),
-  require('@assets/pngs/onboarding/5.png'),
-  require('@assets/pngs/onboarding/6.png'),
-];
-
 export const Onboarding1Screen = () => {
   const navigation = useNavigation<Onboarding1ScreenNavigationProp>();
   const scrollX = useRef(new Animated.Value(0)).current;
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
 
+  // 이미지 프리로딩 (컴포넌트 마운트 시 즉시 실행)
   useEffect(() => {
-    const totalWidth = onboardingImages.length * (IMAGE_WIDTH + IMAGE_GAP);
+    preloadOnboardingImages();
+  }, []);
+
+  useEffect(() => {
+    const totalWidth = ONBOARDING_IMAGES.length * (IMAGE_WIDTH + IMAGE_GAP);
     
     const runAnimation = () => {
       scrollX.setValue(0);
@@ -81,7 +79,7 @@ export const Onboarding1Screen = () => {
               }}
             >
               {/* 첫 번째 세트 */}
-              {onboardingImages.map((image, index) => (
+              {ONBOARDING_IMAGES.map((image, index) => (
                 <View
                   key={`set1-${index}`}
                   style={{
@@ -102,7 +100,7 @@ export const Onboarding1Screen = () => {
                 </View>
               ))}
               {/* 두 번째 세트 (무한 스크롤을 위해) */}
-              {onboardingImages.map((image, index) => (
+              {ONBOARDING_IMAGES.map((image, index) => (
                 <View
                   key={`set2-${index}`}
                   style={{

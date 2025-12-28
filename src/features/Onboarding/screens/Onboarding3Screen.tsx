@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from 'react';
-import { TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, View, ActivityIndicator, Alert } from 'react-native';
 import { Background, Text } from '@components/index';
 import { useOnboarding } from '@hooks/useOnboarding';
 import { usePermissionStore } from '@stores/permissionStore';
 import { PermissionRow } from '@features/Onboarding/components/PermissionRow';
+import { openSettings } from 'react-native-permissions';
 import CameraIcon from '@assets/svgs/Camera.svg';
 import ImageIcon from '@assets/svgs/Image.svg';
 import MapIcon from '@assets/svgs/Map.svg';
@@ -21,11 +22,40 @@ export const Onboarding3Screen = () => {
 
   const handleRequestPermissions = useCallback(async () => {
     setIsRequesting(true);
-    await requestAllPermissions();
+    const result = await requestAllPermissions();
     setIsRequesting(false);
-    // 권한 요청 후 온보딩 완료
-    await completeOnboarding();
+    
+    if (result) {
+      // 모든 권한이 허용된 경우 온보딩 종료
+      await completeOnboarding();
+    } else {
+      // 실패한 권한이 있는 경우 설정으로 가라는 긍정적인 alert 표시
+      const storeState = usePermissionStore.getState();
+      const failedPermissions: string[] = [];
+      if (!storeState.cameraPermission) failedPermissions.push('카메라');
+      if (!storeState.photoLibraryPermission) failedPermissions.push('라이브러리');
+      if (!storeState.locationPermission) failedPermissions.push('위치');
+      
+      Alert.alert(
+        '권한 설정이 필요해요',
+        `더 나은 경험을 위해 ${failedPermissions.join(', ')} 권한을 허용해주세요.\n설정에서 권한을 변경할 수 있어요.`,
+        [
+          { text: '나중에', style: 'cancel' },
+          {
+            text: '설정으로 가기',
+            onPress: () => {
+              openSettings().catch(() => {});
+            },
+          },
+        ]
+      );
+    }
   }, [requestAllPermissions, completeOnboarding]);
+
+  const handleSkip = useCallback(async () => {
+    // 나중에 하기 버튼 클릭 시 온보딩 완료
+    await completeOnboarding();
+  }, [completeOnboarding]);
 
   return (
     <Background isStatusBarGap={true} isTabBarGap={false}>
@@ -86,7 +116,7 @@ export const Onboarding3Screen = () => {
               />
             )}
           </TouchableOpacity>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={handleSkip}>
             <Text text="나중에 하기" type="caption1" className="text-text-2 text-center" />
           </TouchableOpacity>
         </View>

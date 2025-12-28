@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '@libs/supabase/supabase.ts'; // supabase 클라이언트 경로 확인 필요
 import { Alert, Platform } from 'react-native';
 import { getUserProfile, type UserProfile } from '@libs/supabase/userProfileService';
+import { useRecordStore } from './recordStore';
 
 interface AuthState {
   isLoggedIn: boolean;
@@ -203,6 +204,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           }
           // 로그인 성공 후 프로필 가져오기
           await get().fetchUserProfile();
+          // 로그인 성공 후 레코드 가져오기
+          useRecordStore.getState().fetchRecords().catch((error) => {
+            if (__DEV__) console.error('[AuthStore] Error fetching records after login:', error);
+          });
         }
       } else {
         console.error('Google ID 토큰을 받지 못했습니다:', userInfo);
@@ -262,6 +267,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
         // 로그인 성공 후 프로필 가져오기
         await get().fetchUserProfile();
+        // 로그인 성공 후 레코드 가져오기
+        useRecordStore.getState().fetchRecords().catch((error) => {
+          if (__DEV__) console.error('[AuthStore] Error fetching records after login:', error);
+        });
       }
     } catch (error: any) {
       Alert.alert('Apple 로그인 오류', error.message || '알 수 없는 오류가 발생했습니다.');
@@ -299,6 +308,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
         // 로그인 성공 후 프로필 가져오기
         await get().fetchUserProfile();
+        // 로그인 성공 후 레코드 가져오기
+        useRecordStore.getState().fetchRecords().catch((error) => {
+          if (__DEV__) console.error('[AuthStore] Error fetching records after login:', error);
+        });
         
         return true;
       }

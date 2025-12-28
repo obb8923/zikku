@@ -2,7 +2,7 @@
 // 플랫폼별 권한 요청/확인 로직을 일관성 있게 관리합니다.
 
 import { create } from 'zustand';
-import { requestMultiple, PERMISSIONS, RESULTS, check } from 'react-native-permissions';
+import { request, requestMultiple, PERMISSIONS, RESULTS, check } from 'react-native-permissions';
 import { Platform } from 'react-native';
 
 // 1. 권한 상태 타입 정의
@@ -112,12 +112,11 @@ export const usePermissionStore = create<PermissionState>((set, get) => ({
           const isGranted = status === RESULTS.GRANTED;
           updatePermissionState(permission, isGranted, set);
         } catch (error) {
-          console.error(`[PermissionStore] Error checking permission ${permission}:`, error);
+          // 에러 발생 시 무시하고 계속 진행
         }
       }
       set({ isInitialized: true });
     } catch (error) {
-      console.error("[PermissionStore] Error during permission check: ", error);
       set({ isInitialized: true });
     }
   },
@@ -125,7 +124,6 @@ export const usePermissionStore = create<PermissionState>((set, get) => ({
   // 카메라 권한 요청 함수
   requestCameraPermission: async () => {
     try {
-
       const permission = Platform.select({
         ios: PERMISSIONS.IOS.CAMERA,
         android: PERMISSIONS.ANDROID.CAMERA,
@@ -133,12 +131,11 @@ export const usePermissionStore = create<PermissionState>((set, get) => ({
       });
 
       if (!permission) return false;
-      const status = await requestMultiple([permission]);
-      const isGranted = status[permission] === RESULTS.GRANTED;
+      const status = await request(permission);
+      const isGranted = status === RESULTS.GRANTED;
       updatePermissionState(permission, isGranted, set);
       return isGranted;
     } catch (error) {
-      console.error('[PermissionStore] Error requesting camera permission:', error);
       return false;
     }
   },
@@ -153,12 +150,11 @@ export const usePermissionStore = create<PermissionState>((set, get) => ({
         permission = getGalleryPermission();
       }
       if (!permission) return false;
-      const status = await requestMultiple([permission]);
-      const isGranted = status[permission] === RESULTS.GRANTED;
+      const status = await request(permission);
+      const isGranted = status === RESULTS.GRANTED;
       updatePermissionState(permission, isGranted, set);
       return isGranted;
     } catch (error) {
-      console.error('[PermissionStore] Error requesting photo library permission:', error);
       return false;
     }
   },
@@ -172,12 +168,11 @@ export const usePermissionStore = create<PermissionState>((set, get) => ({
         default: undefined,
       });
       if (!permission) return false;
-      const status = await requestMultiple([permission]);
-      const isGranted = status[permission] === RESULTS.GRANTED;
+      const status = await request(permission);
+      const isGranted = status === RESULTS.GRANTED;
       updatePermissionState(permission, isGranted, set);
       return isGranted;
     } catch (error) {
-      console.error('[PermissionStore] Error requesting location permission:', error);
       return false;
     }
   },
@@ -190,7 +185,6 @@ export const usePermissionStore = create<PermissionState>((set, get) => ({
       const locationGranted = await get().requestLocationPermission();
       return cameraGranted && photoLibraryGranted && locationGranted;
     } catch (error) {
-      console.error('[PermissionStore] Error during permission request: ', error);
       return false;
     }
   },
@@ -202,7 +196,6 @@ export const usePermissionStore = create<PermissionState>((set, get) => ({
       const photoLibraryGranted = await get().requestPhotoLibraryPermission();
       return cameraGranted && photoLibraryGranted;
     } catch (error) {
-      console.error('[PermissionStore] Error in ensureCameraAndPhotos: ', error);
       return false;
     }
   },
