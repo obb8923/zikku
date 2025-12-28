@@ -27,6 +27,7 @@ export const MyInfoScreen = () => {
   const [selectedAvatarUri, setSelectedAvatarUri] = useState<string | null>(null);
   const [originalNickname, setOriginalNickname] = useState('');
   const [originalAvatarUrl, setOriginalAvatarUrl] = useState<string | null>(null);
+  const [avatarUrlTimestamp, setAvatarUrlTimestamp] = useState<number>(Date.now());
   const nicknameInputRef = useRef<TextInput>(null);
   const requestPhotoLibraryPermission = usePermissionStore((s) => s.requestPhotoLibraryPermission);
   
@@ -37,10 +38,14 @@ export const MyInfoScreen = () => {
       const avatarUrl = userProfile.avatar_url || null;
       setNicknameValue(nickname);
       setOriginalNickname(nickname);
+      // avatar_url이 변경된 경우에만 타임스탬프 업데이트
+      if (originalAvatarUrl !== avatarUrl) {
+        setAvatarUrlTimestamp(Date.now());
+      }
       setOriginalAvatarUrl(avatarUrl);
       setSelectedAvatarUri(null); // 초기화 시 선택된 아바타 리셋
     }
-  }, [userProfile]);
+  }, [userProfile, originalAvatarUrl]);
   
   // 변경사항 확인
   const hasChanges = 
@@ -78,11 +83,13 @@ export const MyInfoScreen = () => {
       });
 
       if (success) {
-        await fetchUserProfile();
-        // 원본 상태 업데이트
+        // 원본 상태를 먼저 업데이트
         setOriginalNickname(nicknameValue.trim());
         setOriginalAvatarUrl(avatarUrl);
         setSelectedAvatarUri(null);
+        setAvatarUrlTimestamp(Date.now()); // 이미지 캐시 무효화를 위한 타임스탬프 업데이트
+        // 프로필 다시 가져오기
+        await fetchUserProfile();
         Alert.alert('성공', '프로필이 업데이트되었습니다.');
       } else {
         Alert.alert('오류', '프로필 업데이트에 실패했습니다.');
@@ -241,9 +248,12 @@ export const MyInfoScreen = () => {
                       />
                     ) : userProfile?.avatar_url ? (
                       <Image 
-                        source={{ uri: userProfile.avatar_url }} 
+                        source={{ 
+                          uri: `${userProfile.avatar_url}${userProfile.avatar_url.includes('?') ? '&' : '?'}t=${avatarUrlTimestamp}`
+                        }} 
                         style={{ width: 96, height: 96 }}
                         resizeMode="cover"
+                        key={`${userProfile.avatar_url}-${avatarUrlTimestamp}`}
                       />
                     ) : (
                       <Text type="title2" text={userProfile?.nickname?.charAt(0).toUpperCase() || 'U'} />
