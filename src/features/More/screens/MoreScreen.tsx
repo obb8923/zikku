@@ -1,10 +1,11 @@
 import { View, Platform, Alert, Linking } from 'react-native';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import type { MapStackParamList } from '@nav/stack/MapStack';
-import { Background, LiquidGlassButton, Text, CategorySelectModal } from '@components/index';
+import { useTranslation } from 'react-i18next';
+import { Background, LiquidGlassButton, Text, CategorySelectModal, LanguageSelectModal } from '@components/index';
 import { MoreListItem, type MoreItem } from '../components/MoreListItem';
 import { AuthButton } from '@features/More/components/AuthButton';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +15,7 @@ import type { ChipTypeKey } from '@constants/CHIP';
 import XIcon from '@assets/svgs/X.svg';
 import Share from 'react-native-share';
 import { requestReview } from 'react-native-store-review';
+import { MAIL_TO } from '@constants/NORMAL';
 
 type MoreScreenNavigationProp = NativeStackNavigationProp<MapStackParamList, 'More'>;
 
@@ -28,11 +30,13 @@ type MoreGroup = {
 export const MoreScreen = () => {
   const navigation = useNavigation<MoreScreenNavigationProp>();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const handleAppleLogin = useAuthStore((s) => s.handleAppleLogin);
   const handleGoogleLogin = useAuthStore((s) => s.handleGoogleLogin);
   const isLoading = useAuthStore((s) => s.isLoading);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
+  const [isLanguageModalVisible, setIsLanguageModalVisible] = useState(false);
 
   // 각 버튼 핸들러 함수들
   const handlePersonalInfo = () => {
@@ -40,15 +44,21 @@ export const MoreScreen = () => {
   };
 
   const handleLanguage = () => {
-    Alert.alert('언어 설정', '언어 설정 기능은 준비 중입니다.');
+    setIsLanguageModalVisible(true);
   };
 
   const handleNotification = () => {
-    Alert.alert('알림 설정', '알림 설정 기능은 준비 중입니다.');
+    Alert.alert(
+      t('alerts.notificationSettings', { ns: 'more' }),
+      t('alerts.notificationSettingsMessage', { ns: 'more' })
+    );
   };
 
   const handleHaptic = () => {
-    Alert.alert('햅틱 설정', '햅틱 설정 기능은 준비 중입니다.');
+    Alert.alert(
+      t('alerts.hapticSettings', { ns: 'more' }),
+      t('alerts.hapticSettingsMessage', { ns: 'more' })
+    );
   };
 
   const handleCategory = () => {
@@ -66,16 +76,19 @@ export const MoreScreen = () => {
   const handleSuggest = () => {
     navigation.navigate('WebView', {
       url: 'https://forms.gle/PEWBnSqrHQc6mvQP8',
-      title: '건의하기',
+      title: t('items.suggest', { ns: 'more' }),
     });
   };
 
   const handleContact = () => {
-    const email = 'contact@zikku.app'; // 실제 이메일 주소로 변경 필요
-    const subject = encodeURIComponent('문의하기');
+    const email = MAIL_TO; // 실제 이메일 주소로 변경 필요
+    const subject = encodeURIComponent(t('contact.subject', { ns: 'more' }));
     const url = `mailto:${email}?subject=${subject}`;
     Linking.openURL(url).catch(() => {
-      Alert.alert('오류', '이메일 앱을 열 수 없습니다.');
+      Alert.alert(
+        t('alerts.error', { ns: 'common' }),
+        t('alerts.emailAppCannotOpen', { ns: 'more' })
+      );
     });
   };
 
@@ -99,7 +112,10 @@ export const MoreScreen = () => {
         ? 'https://apps.apple.com/app/idYOUR_APP_ID' // 실제 App Store ID로 변경 필요
         : 'https://play.google.com/store/apps/details?id=YOUR_PACKAGE_NAME'; // 실제 패키지 이름으로 변경 필요
       Linking.openURL(storeUrl).catch(() => {
-        Alert.alert('오류', '스토어를 열 수 없습니다.');
+        Alert.alert(
+          t('alerts.error', { ns: 'common' }),
+          t('alerts.storeCannotOpen', { ns: 'more' })
+        );
       });
     }
   };
@@ -120,14 +136,20 @@ export const MoreScreen = () => {
   const handleTerms = () => {
     const url = 'https://zikku.app/terms'; // 실제 이용약관 URL로 변경 필요
     Linking.openURL(url).catch(() => {
-      Alert.alert('오류', '링크를 열 수 없습니다.');
+      Alert.alert(
+        t('alerts.error', { ns: 'common' }),
+        t('alerts.linkCannotOpen', { ns: 'more' })
+      );
     });
   };
 
   const handlePrivacy = () => {
     const url = 'https://zikku.app/privacy'; // 실제 개인정보 처리방침 URL로 변경 필요
     Linking.openURL(url).catch(() => {
-      Alert.alert('오류', '링크를 열 수 없습니다.');
+      Alert.alert(
+        t('alerts.error', { ns: 'common' }),
+        t('alerts.linkCannotOpen', { ns: 'more' })
+      );
     });
   };
 
@@ -136,21 +158,21 @@ export const MoreScreen = () => {
   };
 
   // MOCK_MORE_GROUPS: 각 아이템에 id, title, handler 함수 포함
-  const MOCK_MORE_GROUPS: MoreGroup[] = [
+  const MOCK_MORE_GROUPS: MoreGroup[] = useMemo(() => [
     {
       id: 'personalization',
-      title: '개인화',
+      title: t('groups.personalization', { ns: 'more' }),
       items: [
         {
           id: 'personal-info',
-          title: '내 정보',
+          title: t('items.personalInfo', { ns: 'more' }),
           handler: handlePersonalInfo,
         },
-        // {
-        //   id: 'language',
-        //   title: '언어',
-        //   handler: handleLanguage,
-        // },
+        {
+          id: 'language',
+          title: t('items.language', { ns: 'more' }),
+          handler: handleLanguage,
+        },
         // {
         //   id: 'notification',
         //   title: '알림',
@@ -163,23 +185,23 @@ export const MoreScreen = () => {
         // },
         {
           id: 'type',
-          title: '카테고리',
+          title: t('items.category', { ns: 'more' }),
           handler: handleCategory,
         },
       ],
     },
     {
       id: 'about',
-      title: '소개',
+      title: t('groups.about', { ns: 'more' }),
       items: [
         {
           id: 'suggest',
-          title: '건의하기',
+          title: t('items.suggest', { ns: 'more' }),
           handler: handleSuggest,
         },
         {
           id: 'contact',
-          title: '문의하기',
+          title: t('items.contact', { ns: 'more' }),
           handler: handleContact,
         },
         // {
@@ -204,7 +226,7 @@ export const MoreScreen = () => {
         // },
       ],
     },
-  ];
+  ], [t, handlePersonalInfo, handleLanguage, handleCategory, handleSuggest, handleContact]);
 
   const renderItem: ListRenderItem<MoreGroup> = ({ item }) => {
     return (
@@ -246,7 +268,7 @@ export const MoreScreen = () => {
   return (
     <Background isStatusBarGap={false} style={{ paddingBottom: 0 }}>
       <View className="pt-4 px-6 mb-4 flex-row justify-between items-center">
-          <Text type="title3" text="더보기" style={{ fontWeight: '600', color: COLORS.TEXT_2 }} />
+          <Text type="title3" text={t('title', { ns: 'more' })} style={{ fontWeight: '600', color: COLORS.TEXT_2 }} />
           <LiquidGlassButton size="small" onPress={() => navigation.goBack()}>
             <XIcon width={20} height={20} color={COLORS.TEXT} />
           </LiquidGlassButton>
@@ -276,6 +298,10 @@ export const MoreScreen = () => {
           visible={isCategoryModalVisible}
           onClose={handleCategoryModalClose}
           onSelect={handleCategorySelect}
+        />
+        <LanguageSelectModal
+          visible={isLanguageModalVisible}
+          onClose={() => setIsLanguageModalVisible(false)}
         />
     </Background>
   );

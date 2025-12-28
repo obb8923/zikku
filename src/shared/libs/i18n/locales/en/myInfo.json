@@ -1,0 +1,25 @@
+{
+  "title": "My Info",
+  "fields": {
+    "nickname": "Nickname",
+    "nicknamePlaceholder": "Enter nickname",
+    "userCode": "User Code",
+    "userCodePlaceholder": "No code",
+    "changed": "Changed"
+  },
+  "buttons": {
+    "deleteAccount": "Delete"
+  },
+  "alerts": {
+    "deleteAccountTitle": "Delete Account",
+    "deleteAccountMessage": "Are you sure you want to delete your account?\nAll data will be deleted and cannot be recovered.",
+    "deleteAccountSuccess": "Account deletion completed.",
+    "deleteAccountError": "An error occurred while deleting account.",
+    "profileUpdated": "Profile updated.",
+    "profileUpdateFailed": "Failed to update profile.",
+    "nicknameRequired": "Please enter a nickname.",
+    "cannotLoadProfile": "Cannot load user information.",
+    "logoutConfirm": "Are you sure you want to logout?"
+  }
+}
+

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { LiquidGlassView } from './LiquidGlassView';
 import { Text } from './Text';
 import {BUTTON_SIZE_MEDIUM} from '@constants/NORMAL';
@@ -34,6 +35,8 @@ const setColorAlpha = (color: string, alpha: number): string => {
 };
 
 export const Chip = ({ chipType, color, tintColor, interactive = true }: ChipProps) => {
+  const { t } = useTranslation();
+  
   // chipType이 null인 경우 (선택되지 않은 상태)
   if (chipType === null) {
     return (
@@ -53,8 +56,8 @@ export const Chip = ({ chipType, color, tintColor, interactive = true }: ChipPro
         pointerEvents={interactive ? 'auto' : 'none'}
       >
         <Text 
+          text={t('select', { ns: 'chip' })}
           type="body2" 
-          text="이 버튼을 눌러 카테고리를 선택해주세요" 
           style={{ fontWeight: 500 }} 
         />
       </LiquidGlassView>
@@ -62,7 +65,6 @@ export const Chip = ({ chipType, color, tintColor, interactive = true }: ChipPro
   }
 
   // chipType에 따라 텍스트와 아이콘 가져오기
-  const text = CHIP_TYPE[chipType];
   const chipTypeValue = CHIP_TYPE[chipType];
   const IconComponent = CHIP_ICONS[chipTypeValue];
   
@@ -91,9 +93,9 @@ export const Chip = ({ chipType, color, tintColor, interactive = true }: ChipPro
         <IconComponent width={24} height={24} color={textColor} />
       )}
       <Text 
+        text={t(`types.${chipType}`, { ns: 'chip' })}
         type="body2" 
-        text={text} 
-        style={{ fontWeight: 500,marginLeft: IconComponent ? 8 : 0, ...(textColor ? { color: textColor } : {}) }} 
+        style={{ fontWeight: 500, marginLeft: IconComponent ? 8 : 0, ...(textColor ? { color: textColor } : {}) }} 
       />
     </LiquidGlassView>
   );

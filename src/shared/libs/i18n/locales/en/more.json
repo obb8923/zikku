@@ -1,0 +1,33 @@
+{
+  "title": "More",
+  "groups": {
+    "personalization": "Personalization",
+    "about": "About"
+  },
+  "items": {
+    "personalInfo": "My Info",
+    "language": "Language",
+    "category": "Category",
+    "suggest": "Suggest",
+    "contact": "Contact"
+  },
+  "alerts": {
+    "languageSettings": "Language Settings",
+    "languageSettingsMessage": "Language settings feature is coming soon.",
+    "notificationSettings": "Notification Settings",
+    "notificationSettingsMessage": "Notification settings feature is coming soon.",
+    "hapticSettings": "Haptic Settings",
+    "hapticSettingsMessage": "Haptic settings feature is coming soon.",
+    "emailAppCannotOpen": "Cannot open email app.",
+    "linkCannotOpen": "Cannot open link.",
+    "storeCannotOpen": "Cannot open store."
+  },
+  "contact": {
+    "subject": "Contact Us"
+  },
+  "buttons": {
+    "signInWithApple": "Sign in with Apple",
+    "signInWithGoogle": "Sign in with Google"
+  }
+}
+

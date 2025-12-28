@@ -1,0 +1,21 @@
+{
+  "buttons": {
+    "start": "Start",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving...",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "close": "Close",
+    "login": "Login",
+    "logout": "Logout",
+    "skip": "Skip"
+  },
+  "alerts": {
+    "success": "Success",
+    "error": "Error",
+    "requiredInfoMissing": "Required information is missing."
+  },
+  "loading": "..."
+}
+

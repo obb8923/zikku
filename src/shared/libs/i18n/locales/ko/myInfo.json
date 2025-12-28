@@ -1,0 +1,25 @@
+{
+  "title": "내 정보",
+  "fields": {
+    "nickname": "닉네임",
+    "nicknamePlaceholder": "닉네임을 입력하세요",
+    "userCode": "사용자 코드",
+    "userCodePlaceholder": "코드 없음",
+    "changed": "변경됨"
+  },
+  "buttons": {
+    "deleteAccount": "탈퇴하기"
+  },
+  "alerts": {
+    "deleteAccountTitle": "회원 탈퇴",
+    "deleteAccountMessage": "정말로 회원 탈퇴를 하시겠습니까?",
+    "deleteAccountSuccess": "회원 탈퇴가 완료되었습니다.",
+    "deleteAccountError": "회원 탈퇴 중 오류가 발생했습니다.",
+    "profileUpdated": "프로필이 업데이트되었습니다.",
+    "profileUpdateFailed": "프로필 업데이트에 실패했습니다.",
+    "nicknameRequired": "닉네임을 입력해주세요.",
+    "cannotLoadProfile": "사용자 정보를 불러올 수 없습니다.",
+    "logoutConfirm": "정말 로그아웃하시겠습니까?"
+  }
+}
+

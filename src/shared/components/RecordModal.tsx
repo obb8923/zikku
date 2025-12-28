@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Image, Keyboard, ScrollView, Alert, ActivityIndicator, TouchableOpacity, Animated } from 'react-native';
 import { Portal } from '@gorhom/portal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import MapView, { Region, Marker } from 'react-native-maps';
 import { useLocationStore } from '@stores/locationStore';
 import { useAuthStore } from '@stores/authStore';
@@ -38,6 +39,7 @@ export const RecordModal = ({
   image,
 }: RecordModalProps) => {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const [note, setNote] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ChipTypeKey | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -185,22 +187,34 @@ export const RecordModal = ({
   // 저장 핸들러 (생성만 처리)
   const handleSave = useCallback(async () => {
     if (!selectedCategory) {
-      Alert.alert('오류', '카테고리를 선택해주세요.');
+      Alert.alert(
+        t('alerts.error', { ns: 'common' }),
+        t('errors.categoryRequired', { ns: 'errors' })
+      );
       return;
     }
     
     if (!selectedLocation) {
-      Alert.alert('오류', '위치를 선택해주세요.');
+      Alert.alert(
+        t('alerts.error', { ns: 'common' }),
+        t('errors.locationRequired', { ns: 'errors' })
+      );
       return;
     }
     
     if (!userId) {
-      Alert.alert('오류', '로그인이 필요합니다.');
+      Alert.alert(
+        t('alerts.error', { ns: 'common' }),
+        t('errors.loginRequired', { ns: 'errors' })
+      );
       return;
     }
 
     if (!image?.uri) {
-      Alert.alert('오류', '이미지가 필요합니다.');
+      Alert.alert(
+        t('alerts.error', { ns: 'common' }),
+        t('errors.imageRequired', { ns: 'errors' })
+      );
       return;
     }
     
@@ -223,26 +237,30 @@ export const RecordModal = ({
         addRecord(savedRecord);
       }
       
-      Alert.alert('성공', '기록가 저장되었습니다.', [
-        {
-          text: '확인',
-          onPress: () => {
-            onClose();
-            // 상태 초기화
-            setNote('');
-            setSelectedCategory(null);
-            setSelectedLocation(null);
-            setMapRegion(null);
+      Alert.alert(
+        t('alerts.success', { ns: 'common' }),
+        t('errors.recordSaved', { ns: 'errors' }),
+        [
+          {
+            text: t('buttons.confirm', { ns: 'common' }),
+            onPress: () => {
+              onClose();
+              // 상태 초기화
+              setNote('');
+              setSelectedCategory(null);
+              setSelectedLocation(null);
+              setMapRegion(null);
+            },
           },
-        },
-      ]);
+        ]
+      );
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : '기록 저장에 실패했습니다.';
-      Alert.alert('오류', errorMessage);
+      const errorMessage = error instanceof Error ? error.message : t('errors.recordSaveFailed', { ns: 'errors' });
+      Alert.alert(t('alerts.error', { ns: 'common' }), errorMessage);
     } finally {
       setIsSaving(false);
     }
-  }, [image, selectedLocation, selectedCategory, note, userId, onClose, addRecord]);
+  }, [image, selectedLocation, selectedCategory, note, userId, onClose, addRecord, t]);
 
   if (!visible) {
     return null;
@@ -285,13 +303,13 @@ export const RecordModal = ({
                   <LiquidGlassTextButton 
                     onPress={() => handleTabChange('photo')} 
                     size="medium" 
-                    text="사진과 카테고리"
+                    text={t('tabs.photoAndCategory', { ns: 'map' })}
                     style={{ opacity: activeTab === 'photo' ? 1 : 0.5 }}
                   />
                   <LiquidGlassTextButton 
                     onPress={() => handleTabChange('location')} 
                     size="medium" 
-                    text="위치와 메모"
+                    text={t('tabs.locationAndMemo', { ns: 'map' })}
                     style={{ opacity: activeTab === 'location' ? 1 : 0.5 }}
                   />
                 </View>
@@ -343,7 +361,7 @@ export const RecordModal = ({
               <LiquidGlassInput
                 value={note}
                 onChangeText={setNote}
-                placeholder="(선택) 메모를 입력할 수 있어요"
+                placeholder={t('memo.placeholder', { ns: 'map' })}
                 multiline
                 numberOfLines={4}
                 maxLength={100}
@@ -409,7 +427,7 @@ export const RecordModal = ({
               <LiquidGlassTextButton
                 onPress={handleSave}
                 size="medium"
-                text="저장하기"
+                text={t('saveButton', { ns: 'map' })}
                 loading={isSaving}
                 disabled={isSaving}
               />

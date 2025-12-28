@@ -2,6 +2,7 @@ import { View, ScrollView, Alert, Image, TouchableOpacity, TextInput } from 'rea
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MapStackParamList } from '@nav/stack/MapStack';
+import { useTranslation } from 'react-i18next';
 import { Background, LiquidGlassTextButton, LiquidGlassInput } from '@components/index';
 import { Text } from '@components/Text';
 import { LiquidGlassButton } from '@components/LiquidGlassButton';
@@ -19,6 +20,7 @@ type MyInfoScreenNavigationProp = NativeStackNavigationProp<MapStackParamList, '
 export const MyInfoScreen = () => {
   const navigation = useNavigation<MyInfoScreenNavigationProp>();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const userProfile = useAuthStore((s) => s.userProfile);
   const fetchUserProfile = useAuthStore((s) => s.fetchUserProfile);
   const userId = useAuthStore((s) => s.userId);
@@ -58,7 +60,10 @@ export const MyInfoScreen = () => {
     }
 
     if (!nicknameValue.trim()) {
-      Alert.alert('오류', '닉네임을 입력해주세요.');
+      Alert.alert(
+        t('alerts.error', { ns: 'common' }),
+        t('alerts.nicknameRequired', { ns: 'myInfo' })
+      );
       return;
     }
 
@@ -90,13 +95,19 @@ export const MyInfoScreen = () => {
         setAvatarUrlTimestamp(Date.now()); // 이미지 캐시 무효화를 위한 타임스탬프 업데이트
         // 프로필 다시 가져오기
         await fetchUserProfile();
-        Alert.alert('성공', '프로필이 업데이트되었습니다.');
+        Alert.alert(
+          t('alerts.success', { ns: 'common' }),
+          t('alerts.profileUpdated', { ns: 'myInfo' })
+        );
       } else {
-        Alert.alert('오류', '프로필 업데이트에 실패했습니다.');
+        Alert.alert(
+          t('alerts.error', { ns: 'common' }),
+          t('alerts.profileUpdateFailed', { ns: 'myInfo' })
+        );
       }
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : '프로필 업데이트에 실패했습니다.';
-      Alert.alert('오류', errorMessage);
+      const errorMessage = error instanceof Error ? error.message : t('alerts.profileUpdateFailed', { ns: 'myInfo' });
+      Alert.alert(t('alerts.error', { ns: 'common' }), errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -110,14 +121,20 @@ export const MyInfoScreen = () => {
 
   const handleAvatarPress = async () => {
     if (!userId) {
-      Alert.alert('오류', '로그인이 필요합니다.');
+      Alert.alert(
+        t('alerts.error', { ns: 'common' }),
+        t('errors.loginRequired', { ns: 'errors' })
+      );
       return;
     }
 
     // 권한 확인
     const hasPermission = await requestPhotoLibraryPermission();
     if (!hasPermission) {
-      Alert.alert('권한 필요', '사진을 선택하려면 갤러리 접근 권한이 필요합니다.');
+      Alert.alert(
+        t('errors.permissionRequired', { ns: 'errors' }),
+        t('errors.photoLibraryPermissionRequired', { ns: 'errors' })
+      );
       return;
     }
 
@@ -147,15 +164,15 @@ export const MyInfoScreen = () => {
 
   const handleLogout = () => {
     Alert.alert(
-      '로그아웃',
-      '정말 로그아웃하시겠습니까?',
+      t('buttons.logout', { ns: 'common' }),
+      t('alerts.logoutConfirm', { ns: 'myInfo' }),
       [
         {
-          text: '취소',
+          text: t('buttons.cancel', { ns: 'common' }),
           style: 'cancel',
         },
         {
-          text: '로그아웃',
+          text: t('buttons.logout', { ns: 'common' }),
           style: 'destructive',
           onPress: async () => {
             const logout = useAuthStore.getState().logout;
@@ -186,24 +203,30 @@ export const MyInfoScreen = () => {
 
   const handleDeleteAccount = () => {
     Alert.alert(
-      '회원 탈퇴',
-      '정말 회원 탈퇴를 하시겠습니까?\n탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.',
+      t('alerts.deleteAccountTitle', { ns: 'myInfo' }),
+      t('alerts.deleteAccountMessage', { ns: 'myInfo' }),
       [
         {
-          text: '취소',
+          text: t('buttons.cancel', { ns: 'common' }),
           style: 'cancel',
         },
         {
-          text: '탈퇴하기',
+          text: t('buttons.deleteAccount', { ns: 'myInfo' }),
           style: 'destructive',
           onPress: async () => {
             const deleteAccount = useAuthStore.getState().deleteAccount;
             const success = await deleteAccount();
             if (success) {
-              Alert.alert('완료', '회원 탈퇴가 완료되었습니다.');
+              Alert.alert(
+                t('alerts.success', { ns: 'common' }),
+                t('alerts.deleteAccountSuccess', { ns: 'myInfo' })
+              );
               navigation.goBack();
             } else {
-              Alert.alert('오류', '회원 탈퇴 중 오류가 발생했습니다.');
+              Alert.alert(
+                t('alerts.error', { ns: 'common' }),
+                t('alerts.deleteAccountError', { ns: 'myInfo' })
+              );
             }
           },
         },
@@ -216,7 +239,7 @@ export const MyInfoScreen = () => {
       <View className="pt-4 px-6 mb-4 flex-row justify-between items-center">
         <Text 
           type="title3" 
-          text="내 정보" 
+          text={t('title', { ns: 'myInfo' })}
           style={{ fontWeight: '600', color: COLORS.TEXT_2, flex: 1 }} 
         />
         <LiquidGlassButton size="small" onPress={() => navigation.goBack()}>
@@ -262,18 +285,18 @@ export const MyInfoScreen = () => {
                   </View>
                 </TouchableOpacity>
                 {selectedAvatarUri && (
-                  <Text type="caption1" text="변경됨" className="mt-2 text-blue-500" />
+                  <Text type="caption1" text={t('fields.changed', { ns: 'myInfo' })} className="mt-2 text-blue-500" />
                 )}
               </View>
 
               {/* 닉네임 */}
               <View className="w-full gap-2">
-                <Text type="body2" text="닉네임" className="text-gray-600" />
+                <Text type="body2" text={t('fields.nickname', { ns: 'myInfo' })} className="text-gray-600" />
                 <LiquidGlassInput
                   ref={nicknameInputRef}
                   value={nicknameValue}
                   onChangeText={setNicknameValue}
-                  placeholder="닉네임을 입력하세요"
+                  placeholder={t('fields.nicknamePlaceholder', { ns: 'myInfo' })}
                   editable={!isSaving}
                 />
               </View>
@@ -283,7 +306,7 @@ export const MyInfoScreen = () => {
                 <View className="w-full flex-row gap-2 mt-2">
                   <View className="flex-1">
                     <LiquidGlassTextButton
-                      text="취소"
+                      text={t('buttons.cancel', { ns: 'common' })}
                       onPress={handleCancel}
                       disabled={isSaving}
                       size="medium"
@@ -293,7 +316,7 @@ export const MyInfoScreen = () => {
                   </View>
                   <View className="flex-1">
                     <LiquidGlassTextButton
-                      text={isSaving ? '저장 중...' : '저장'}
+                      text={isSaving ? t('buttons.saving', { ns: 'common' }) : t('buttons.save', { ns: 'common' })}
                       onPress={handleSave}
                       disabled={isSaving || !hasChanges}
                       size="medium"
@@ -306,25 +329,25 @@ export const MyInfoScreen = () => {
 
               {/* 사용자 코드 (읽기 전용) */}
               <View className="w-full gap-2">
-                <Text type="body2" text="사용자 코드" className="text-gray-600" />
+                <Text type="body2" text={t('fields.userCode', { ns: 'myInfo' })} className="text-gray-600" />
                 <LiquidGlassInput
-                  value={userProfile.code || '코드 없음'}
+                  value={userProfile.code || t('fields.userCodePlaceholder', { ns: 'myInfo' })}
                   editable={false}
-                  placeholder="코드 없음"
+                  placeholder={t('fields.userCodePlaceholder', { ns: 'myInfo' })}
                 />
               </View>
 
               {/* 로그아웃/회원 탈퇴 버튼 */}
               <View className="w-full gap-3 mt-6">
                 <LiquidGlassTextButton
-                  text="로그아웃"
+                  text={t('buttons.logout', { ns: 'common' })}
                   onPress={handleLogout}
                   size="large"
                   tintColor="rgba(255,255,255,0.2)"
                   textStyle={{ color: 'black', fontWeight: 'bold' }}
                 />
                 <LiquidGlassTextButton
-                  text="회원 탈퇴"
+                  text={t('buttons.deleteAccount', { ns: 'myInfo' })}
                   onPress={handleDeleteAccount}
                   size="large"
                   tintColor="rgba(255,0,0,0.1)"
@@ -333,7 +356,7 @@ export const MyInfoScreen = () => {
               </View>
             </View>
           ) : (
-            <Text type="body1" text="사용자 정보를 불러올 수 없습니다." className="text-text-2"/>
+            <Text type="body1" text={t('alerts.cannotLoadProfile', { ns: 'myInfo' })} className="text-text-2"/>
           )}
         </View>
       </ScrollView>

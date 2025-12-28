@@ -1,0 +1,31 @@
+{
+  "greeting": {
+    "welcome": "Welcome",
+    "dawn": "Quiet Dawn",
+    "morning": "Fresh Morning",
+    "day": "Stay Strong Today",
+    "evening": "Good Evening"
+  },
+  "buttons": {
+    "archive": "Archive",
+    "settings": "Settings",
+    "login": "Sign In"
+  },
+  "tabs": {
+    "photoAndCategory": "Photo & Category",
+    "locationAndMemo": "Location & Memo"
+  },
+  "category": {
+    "select": "Tap to select category"
+  },
+  "memo": {
+    "placeholder": "(Optional) Enter a memo"
+  },
+  "saveButton": "Save",
+  "alerts": {
+    "loginRequired": "Login Required",
+    "loginRequiredForPhotoSelection": "Login is required to select a photo.",
+    "loginRequiredForPhotoCapture": "Login is required to take a photo."
+  }
+}
+

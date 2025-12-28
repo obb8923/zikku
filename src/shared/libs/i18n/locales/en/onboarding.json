@@ -1,0 +1,39 @@
+{
+  "screen1": {
+    "title": "Capture Your World",
+    "subtitle": "snap what you see",
+    "continue": "Tap to continue"
+  },
+  "screen2": {
+    "title": "Record in Beads",
+    "subtitle": "So this moment won't be forgotten",
+    "continue": "Tap to continue"
+  },
+  "screen3": {
+    "title": "Please Allow Permissions",
+    "subtitle": "The following permissions are needed to record moments",
+    "button": "Allow Permissions",
+    "skip": "Skip",
+    "permissions": {
+      "camera": {
+        "title": "Camera",
+        "description": "Needed to capture moments"
+      },
+      "photoLibrary": {
+        "title": "Photo Library",
+        "description": "Needed to load records"
+      },
+      "location": {
+        "title": "Location",
+        "description": "Needed to record location"
+      }
+    },
+    "alert": {
+      "title": "Permission Settings Required",
+      "message": "Please allow {{permissions}} permissions for a better experience.\nYou can change permissions in Settings.",
+      "later": "Later",
+      "goToSettings": "Go to Settings"
+    }
+  }
+}
+

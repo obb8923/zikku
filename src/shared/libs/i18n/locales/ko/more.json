@@ -1,0 +1,33 @@
+{
+  "title": "더보기",
+  "groups": {
+    "personalization": "개인화",
+    "about": "소개"
+  },
+  "items": {
+    "personalInfo": "내 정보",
+    "language": "언어",
+    "category": "카테고리",
+    "suggest": "건의하기",
+    "contact": "문의하기"
+  },
+  "alerts": {
+    "languageSettings": "언어 설정",
+    "languageSettingsMessage": "언어 설정 기능은 준비 중입니다.",
+    "notificationSettings": "알림 설정",
+    "notificationSettingsMessage": "알림 설정 기능은 준비 중입니다.",
+    "hapticSettings": "햅틱 설정",
+    "hapticSettingsMessage": "햅틱 설정 기능은 준비 중입니다.",
+    "emailAppCannotOpen": "이메일 앱을 열 수 없습니다.",
+    "linkCannotOpen": "링크를 열 수 없습니다.",
+    "storeCannotOpen": "스토어를 열 수 없습니다."
+  },
+  "contact": {
+    "subject": "문의하기"
+  },
+  "buttons": {
+    "signInWithApple": "Apple로 로그인",
+    "signInWithGoogle": "Google로 로그인"
+  }
+}
+

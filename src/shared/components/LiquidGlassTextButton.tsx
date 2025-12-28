@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   GestureResponderEvent,
   Pressable,
@@ -16,7 +17,7 @@ export type LiquidGlassTextButtonProps = {
   borderRadius?: number;
   size?:'small' | 'medium' | 'large';
   style?: ViewStyle;
-  text: string;
+  text?: string;
   textStyle?: TextStyle;
   tintColor?: string;
 };
@@ -31,6 +32,7 @@ export const LiquidGlassTextButton = ({
   style,
   tintColor = 'rgba(0,0,0,0)',
 }: LiquidGlassTextButtonProps) => {
+  const { t } = useTranslation();
   const sizeStyle = {
     small: { height: BUTTON_SIZE_SMALL},
     medium: { height: BUTTON_SIZE_MEDIUM},
@@ -54,7 +56,19 @@ export const LiquidGlassTextButton = ({
         className="items-center justify-center px-4"
         style={{...sizeStyle[size], opacity: disabled || loading ? 0.5 : 1}}
       >
-       <Text type={textType[size] as TypographyType} text={loading ? '...' : text} style={{ fontWeight: '500', color: COLORS.TEXT, ...textStyle }} />
+       {loading ? (
+         <Text 
+           type={textType[size] as TypographyType} 
+           text={t('loading', { ns: 'common' })}
+           style={{ fontWeight: '500', color: COLORS.TEXT, ...textStyle }} 
+         />
+       ) : (
+         <Text 
+           type={textType[size] as TypographyType} 
+           text={text || ''}
+           style={{ fontWeight: '500', color: COLORS.TEXT, ...textStyle }} 
+         />
+       )}
       </Pressable>
     </LiquidGlassView>
   );

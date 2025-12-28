@@ -1,0 +1,17 @@
+{
+  "title": "Archive",
+  "empty": {
+    "title": "No saved records yet",
+    "description": "Create new records through the map"
+  },
+  "notFound": "Record not found.",
+  "delete": {
+    "confirmTitle": "Delete Confirmation",
+    "confirmMessage": "Are you sure you want to delete this record?",
+    "success": "Record deleted."
+  },
+  "memo": {
+    "placeholder": "Enter a memo"
+  }
+}
+

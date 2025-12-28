@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { TouchableOpacity, View, ActivityIndicator, Alert } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Background, Text } from '@components/index';
 import { useOnboarding } from '@hooks/useOnboarding';
 import { usePermissionStore } from '@stores/permissionStore';
@@ -10,6 +11,7 @@ import ImageIcon from '@assets/svgs/Image.svg';
 import MapIcon from '@assets/svgs/Map.svg';
 
 export const Onboarding3Screen = () => {
+  const { t } = useTranslation();
   const { completeOnboarding } = useOnboarding();
   const {
     cameraPermission,
@@ -32,17 +34,17 @@ export const Onboarding3Screen = () => {
       // 실패한 권한이 있는 경우 설정으로 가라는 긍정적인 alert 표시
       const storeState = usePermissionStore.getState();
       const failedPermissions: string[] = [];
-      if (!storeState.cameraPermission) failedPermissions.push('카메라');
-      if (!storeState.photoLibraryPermission) failedPermissions.push('라이브러리');
-      if (!storeState.locationPermission) failedPermissions.push('위치');
+      if (!storeState.cameraPermission) failedPermissions.push(t('screen3.permissions.camera.title', { ns: 'onboarding' }));
+      if (!storeState.photoLibraryPermission) failedPermissions.push(t('screen3.permissions.photoLibrary.title', { ns: 'onboarding' }));
+      if (!storeState.locationPermission) failedPermissions.push(t('screen3.permissions.location.title', { ns: 'onboarding' }));
       
       Alert.alert(
-        '권한 설정이 필요해요',
-        `더 나은 경험을 위해 ${failedPermissions.join(', ')} 권한을 허용해주세요.\n설정에서 권한을 변경할 수 있어요.`,
+        t('screen3.alert.title', { ns: 'onboarding' }),
+        t('screen3.alert.message', { ns: 'onboarding', permissions: failedPermissions.join(', ') }),
         [
-          { text: '나중에', style: 'cancel' },
+          { text: t('screen3.alert.later', { ns: 'onboarding' }), style: 'cancel' },
           {
-            text: '설정으로 가기',
+            text: t('screen3.alert.goToSettings', { ns: 'onboarding' }),
             onPress: () => {
               openSettings().catch(() => {});
             },
@@ -63,12 +65,12 @@ export const Onboarding3Screen = () => {
         {/* 제목 영역 */}
         <View className="mt-8 w-full">
           <Text
-            text="권한을 허용해주세요"
+            text={t('screen3.title', { ns: 'onboarding' })}
             type="title2"
             className="text-left text-black font-bold mb-2"
           />
           <Text
-            text="순간을기록하기 위해 다음 권한이 필요해요"
+            text={t('screen3.subtitle', { ns: 'onboarding' })}
             type="body3"
             className="text-left text-text-2"
           />
@@ -77,22 +79,22 @@ export const Onboarding3Screen = () => {
         {/* 권한 리스트 카드 */}
         <View className="px-5 flex-1 justify-center">
           <PermissionRow
-            title="카메라"
-            description="순간을 촬영하기 위해 필요해요"
+            title={t('screen3.permissions.camera.title', { ns: 'onboarding' })}
+            description={t('screen3.permissions.camera.description', { ns: 'onboarding' })}
             granted={cameraPermission}
             Icon={CameraIcon}
           />
           <View className="h-[1px] bg-gray-200 my-4" />
           <PermissionRow
-            title="사진 라이브러리"
-            description="기록을 불러오기 위해 필요해요"
+            title={t('screen3.permissions.photoLibrary.title', { ns: 'onboarding' })}
+            description={t('screen3.permissions.photoLibrary.description', { ns: 'onboarding' })}
             granted={photoLibraryPermission}
             Icon={ImageIcon}
           />
           <View className="h-[1px] bg-gray-200 my-4" />
           <PermissionRow
-            title="위치"
-            description="위치를기록하기 위해 필요해요"
+            title={t('screen3.permissions.location.title', { ns: 'onboarding' })}
+            description={t('screen3.permissions.location.description', { ns: 'onboarding' })}
             granted={locationPermission}
             Icon={MapIcon}
           />
@@ -110,14 +112,14 @@ export const Onboarding3Screen = () => {
               <ActivityIndicator size="small" color="#000" />
             ) : (
               <Text
-                text="권한 허용하기"
+                text={t('screen3.button', { ns: 'onboarding' })}
                 type="body1"
                 className="text-black font-bold"
               />
             )}
           </TouchableOpacity>
           <TouchableOpacity onPress={handleSkip}>
-            <Text text="나중에 하기" type="caption1" className="text-text-2 text-center" />
+            <Text text={t('screen3.skip', { ns: 'onboarding' })} type="caption1" className="text-text-2 text-center" />
           </TouchableOpacity>
         </View>
       </View>

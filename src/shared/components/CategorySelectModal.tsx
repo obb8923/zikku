@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { TouchableOpacity, View, Animated, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { CHIP_TYPE, type ChipTypeKey } from '@constants/CHIP';
 import { Chip, Text } from '@components/index';
 import { COLORS } from '@constants/COLORS';
@@ -19,7 +20,7 @@ export const CategorySelectModal = ({
   disabled = false,
 }: CategorySelectModalProps) => {
   const insets = useSafeAreaInsets();
-  
+  const { t } = useTranslation();
 
   const handleSelect = (chipType: ChipTypeKey) => {
     onSelect(chipType);
@@ -63,11 +64,11 @@ export const CategorySelectModal = ({
             <View className=" flex-row justify-between items-center mb-4">
             <Text
               type="title3"
-              text="카테고리"
+              text={t('category', { ns: 'chip' })}
               style={{textAlign: 'left', color: COLORS.TEXT_COMPONENT }}
             />
             <TouchableOpacity onPress={onClose}>
-              <Text type="body2" text="닫기" style={{ color: COLORS.TEXT_COMPONENT }} />
+              <Text type="body2" text={t('buttons.close', { ns: 'common' })} style={{ color: COLORS.TEXT_COMPONENT }} />
               </TouchableOpacity>
             </View>
             <View className="flex-row flex-wrap gap-3">

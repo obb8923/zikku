@@ -4,6 +4,7 @@ import { FlashList, ListRenderItem } from '@shopify/flash-list';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MapStackParamList } from '@nav/stack/MapStack';
+import { useTranslation } from 'react-i18next';
 import { Background } from '@components/Background';
 import { Text } from '@components/Text';
 import { useRecordStore, Record } from '@stores/recordStore';
@@ -23,6 +24,7 @@ type ListItem = {
 
 export const ArchiveScreen = () => {
   const navigation = useNavigation<ArchiveScreenNavigationProp>();
+  const { t } = useTranslation();
   const records = useRecordStore(state => state.records);
   const insets = useSafeAreaInsets();
   // records를 월별로 그룹화하여 리스트 아이템으로 변환
@@ -97,7 +99,7 @@ export const ArchiveScreen = () => {
   return (
     <Background isStatusBarGap={false}>
       <View className="pt-4 px-6 mb-4 flex-row justify-between items-center">
-          <Text type="title3" text="기록 저장소" style={{ fontWeight: '600', color: COLORS.TEXT_2 }} />
+          <Text type="title3" text={t('title', { ns: 'archive' })} style={{ fontWeight: '600', color: COLORS.TEXT_2 }} />
           <LiquidGlassButton size="small" onPress={() => navigation.goBack()}>
             <XIcon width={20} height={20} color={COLORS.TEXT} />
           </LiquidGlassButton>
@@ -108,12 +110,12 @@ export const ArchiveScreen = () => {
             <View className="items-center gap-2">
               <Text 
                 type="title3" 
-                text="아직 저장된기록이 없습니다" 
+                text={t('empty.title', { ns: 'archive' })}
                 className="text-text-2 font-bold"
               />
               <Text 
                 type="body2" 
-                text="지도를 통해 새로운기록을 만들어보세요" 
+                text={t('empty.description', { ns: 'archive' })}
                 className="text-text-2 text-center"
               />
             </View>

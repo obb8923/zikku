@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Image, Animated, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { MapStackParamList } from '@nav/stack/MapStack';
 import { usePermissionStore } from '@stores/permissionStore';
 import { useAuthStore } from '@stores/authStore';
@@ -28,6 +29,7 @@ type MapScreenNavigationProp = NativeStackNavigationProp<MapStackParamList, 'Map
 
 export const MapScreen = () => {
   const navigation = useNavigation<MapScreenNavigationProp>();
+  const { t } = useTranslation();
   const requestLocationPermission = usePermissionStore((s) => s.requestLocationPermission);
   const locationPermission = usePermissionStore((s) => s.locationPermission);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
@@ -293,12 +295,12 @@ export const MapScreen = () => {
   const handleSelectFromGallery = useCallback(() => {
     if (!isLoggedIn) {
       Alert.alert(
-        '로그인 필요',
-        '사진을 선택하려면 로그인이 필요합니다.',
+        t('alerts.loginRequired', { ns: 'map' }),
+        t('alerts.loginRequiredForPhotoSelection', { ns: 'map' }),
         [
-          { text: '취소', style: 'cancel' },
+          { text: t('buttons.cancel', { ns: 'common' }), style: 'cancel' },
           { 
-            text: '로그인하기', 
+            text: t('buttons.login', { ns: 'map' }), 
             onPress: () => navigation.navigate('More'),
             style: 'default'
           }
@@ -314,17 +316,17 @@ export const MapScreen = () => {
       handleImagePicked,
     );
    
-  }, [handleImagePicked, isLoggedIn, navigation]);
+  }, [handleImagePicked, isLoggedIn, navigation, t]);
 
   const handleTakePhoto = useCallback(async () => {
     if (!isLoggedIn) {
       Alert.alert(
-        '로그인 필요',
-        '사진을 촬영하려면 로그인이 필요합니다.',
+        t('alerts.loginRequired', { ns: 'map' }),
+        t('alerts.loginRequiredForPhotoCapture', { ns: 'map' }),
         [
-          { text: '취소', style: 'cancel' },
+          { text: t('buttons.cancel', { ns: 'common' }), style: 'cancel' },
           { 
-            text: '로그인하기', 
+            text: t('buttons.login', { ns: 'map' }), 
             onPress: () => navigation.navigate('More'),
             style: 'default'
           }
@@ -339,7 +341,7 @@ export const MapScreen = () => {
       handleImagePicked,
     );
   
-  }, [handleImagePicked, isLoggedIn, navigation]);
+  }, [handleImagePicked, isLoggedIn, navigation, t]);
   return (
     <View className="flex-1">
       {/* 처음 화면 (애니메이션 완료 후 렌더링 취소) */}

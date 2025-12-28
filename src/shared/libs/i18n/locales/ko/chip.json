@@ -1,0 +1,12 @@
+{
+  "category": "카테고리",
+  "types": {
+    "LANDSCAPE": "풍경",
+    "PLACE": "장소",
+    "LIFE": "생명",
+    "DISCOVERY": "발견",
+    "TOGETHER": "함께"
+  },
+  "select": "이 버튼을 눌러 카테고리를 선택해주세요"
+}
+

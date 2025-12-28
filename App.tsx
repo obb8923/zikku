@@ -1,4 +1,5 @@
 import './global.css';
+import '@i18n/index';
 import React from 'react';
 import { StatusBar, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';

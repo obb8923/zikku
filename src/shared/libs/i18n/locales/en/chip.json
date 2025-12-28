@@ -1,0 +1,12 @@
+{
+  "category": "Category",
+  "types": {
+    "LANDSCAPE": "Landscape",
+    "PLACE": "Place",
+    "LIFE": "Life",
+    "DISCOVERY": "Discovery",
+    "TOGETHER": "Together"
+  },
+  "select": "Tap to select category"
+}
+

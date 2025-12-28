@@ -4,6 +4,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MapStackParamList } from '@nav/stack/MapStack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import MapView, { Region, Marker } from 'react-native-maps';
 import { useRecordStore } from '@stores/recordStore';
 import { DEVICE_HEIGHT } from '@constants/NORMAL';
@@ -25,6 +26,7 @@ export const ArchiveDetailScreen = () => {
   const navigation = useNavigation<ArchiveDetailScreenNavigationProp>();
   const route = useRoute<ArchiveDetailScreenRouteProp>();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const { recordId } = route.params;
   
   const records = useRecordStore(state => state.records);
@@ -171,7 +173,10 @@ export const ArchiveDetailScreen = () => {
   // 저장
   const handleSave = useCallback(async () => {
     if (!record || !selectedCategory || !selectedLocation || !userId) {
-      Alert.alert('오류', '필수 정보가 누락되었습니다.');
+      Alert.alert(
+        t('alerts.error', { ns: 'common' }),
+        t('alerts.requiredInfoMissing', { ns: 'common' })
+      );
       return;
     }
 
@@ -197,11 +202,11 @@ export const ArchiveDetailScreen = () => {
       // 저장 성공 후 화면 닫기
       navigation.goBack();
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : '기록 수정에 실패했습니다.';
-      Alert.alert('오류', errorMessage);
+      const errorMessage = error instanceof Error ? error.message : t('errors.recordUpdateFailed', { ns: 'errors' });
+      Alert.alert(t('alerts.error', { ns: 'common' }), errorMessage);
       setIsSaving(false);
     }
-  }, [record, selectedCategory, selectedLocation, note, userId, updateRecordInStore, hasChanges, navigation]);
+  }, [record, selectedCategory, selectedLocation, note, userId, updateRecordInStore, hasChanges, navigation, t]);
 
   // 삭제 버튼
   const handlePressDelete = useCallback(() => {
@@ -210,15 +215,15 @@ export const ArchiveDetailScreen = () => {
     }
     
     Alert.alert(
-      '삭제 확인',
-      '정말로 이 기록를 삭제하시겠습니까?',
+      t('delete.confirmTitle', { ns: 'archive' }),
+      t('delete.confirmMessage', { ns: 'archive' }),
       [
         {
-          text: '취소',
+          text: t('buttons.cancel', { ns: 'common' }),
           style: 'cancel',
         },
         {
-          text: '삭제',
+          text: t('buttons.delete', { ns: 'common' }),
           style: 'destructive',
           onPress: async () => {
             setIsSaving(true);
@@ -226,17 +231,21 @@ export const ArchiveDetailScreen = () => {
               await deleteRecord(record.id);
               removeRecordFromStore(record.id);
               
-              Alert.alert('성공', '기록가 삭제되었습니다.', [
-                {
-                  text: '확인',
-                  onPress: () => {
-                    navigation.goBack();
+              Alert.alert(
+                t('alerts.success', { ns: 'common' }),
+                t('delete.success', { ns: 'archive' }),
+                [
+                  {
+                    text: t('buttons.confirm', { ns: 'common' }),
+                    onPress: () => {
+                      navigation.goBack();
+                    },
                   },
-                },
-              ]);
+                ]
+              );
             } catch (error: unknown) {
-              const errorMessage = error instanceof Error ? error.message : '기록 삭제에 실패했습니다.';
-              Alert.alert('오류', errorMessage);
+              const errorMessage = error instanceof Error ? error.message : t('errors.recordDeleteFailed', { ns: 'errors' });
+              Alert.alert(t('alerts.error', { ns: 'common' }), errorMessage);
             } finally {
               setIsSaving(false);
             }
@@ -244,13 +253,13 @@ export const ArchiveDetailScreen = () => {
         },
       ]
     );
-  }, [record, navigation, removeRecordFromStore]);
+  }, [record, navigation, removeRecordFromStore, t]);
 
   if (!record) {
     return (
       <Background isStatusBarGap={false} isTabBarGap={false}>
         <View className="flex-1 items-center justify-center">
-          <Text type="body2" text="기록를 찾을 수 없습니다." style={{ color: 'rgba(0, 0, 0, 0.5)' }} />
+          <Text type="body2" text={t('notFound', { ns: 'archive' })} style={{ color: 'rgba(0, 0, 0, 0.5)' }} />
         </View>
       </Background>
     );
@@ -277,13 +286,13 @@ export const ArchiveDetailScreen = () => {
             <LiquidGlassTextButton 
               onPress={() => handleTabChange('photo')} 
               size="medium" 
-              text="사진과 카테고리"
+              text={t('tabs.photoAndCategory', { ns: 'map' })}
               style={{ opacity: activeTab === 'photo' ? 1 : 0.5 }}
             />
             <LiquidGlassTextButton 
               onPress={() => handleTabChange('location')} 
               size="medium" 
-              text="위치와 메모"
+              text={t('tabs.locationAndMemo', { ns: 'map' })}
               style={{ opacity: activeTab === 'location' ? 1 : 0.5 }}
             />
           </View>
@@ -332,7 +341,7 @@ export const ArchiveDetailScreen = () => {
                 <LiquidGlassInput
                   value={note}
                   onChangeText={setNote}
-                  placeholder="메모를 입력하세요"
+                  placeholder={t('memo.placeholder', { ns: 'archive' })}
                   multiline
                   returnKeyType="done"
                   onSubmitEditing={() => Keyboard.dismiss()}
@@ -390,13 +399,13 @@ export const ArchiveDetailScreen = () => {
           <LiquidGlassTextButton
               onPress={handlePressDelete}
               size="medium"
-              text="삭제"
+              text={t('buttons.delete', { ns: 'common' })}
               disabled={isSaving}
             />
             <LiquidGlassTextButton
               onPress={handleSave}
               size="medium"
-              text="저장"
+              text={t('buttons.save', { ns: 'common' })}
               disabled={isSaving}
               loading={isSaving}
             />

@@ -3,6 +3,7 @@ import { View, Image, Animated, Dimensions, Easing, TouchableOpacity } from 'rea
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { OnboardingStackParamList } from '@nav/stack/OnboardingStack';
+import { useTranslation } from 'react-i18next';
 import { Background, Text, LiquidGlassView } from '@components/index';
 import { useOnboarding } from '@hooks/useOnboarding';
 import { ONBOARDING_IMAGES } from '../constants/images';
@@ -16,6 +17,7 @@ const IMAGE_GAP = 16; // 이미지 간격
 export const Onboarding2Screen = () => {
   const navigation = useNavigation<Onboarding2ScreenNavigationProp>();
   const { completeOnboarding } = useOnboarding();
+  const { t } = useTranslation();
   const scrollX = useRef(new Animated.Value(0)).current;
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
 
@@ -63,8 +65,8 @@ export const Onboarding2Screen = () => {
       <View className="flex-1 py-6 justify-between bg-[#EFEFEF]">
         {/* 제목 영역 */}
         <View className="items-center justify-center flex-1 mb-6">
-          <Text text="구슬에 담아기록하세요" type="title1" className="text-center text-black font-bold" />
-          <Text text="이 순간이 잊혀지지 않도록" type="title3" className="text-center text-text-2" />
+          <Text text={t('screen2.title', { ns: 'onboarding' })} type="title1" className="text-center text-black font-bold" />
+          <Text text={t('screen2.subtitle', { ns: 'onboarding' })} type="title3" className="text-center text-text-2" />
           </View>
           {/* 히어로 */}
           <View className="flex-1 justify-center overflow-hidden">
@@ -153,7 +155,7 @@ export const Onboarding2Screen = () => {
           </View>
           {/* 하단 안내 문구 */}
           <View className="flex-1 items-center justify-end">
-            <Text text="탭하여 계속하기" type="body3" className="text-center text-text-2" />
+            <Text text={t('screen2.continue', { ns: 'onboarding' })} type="body3" className="text-center text-text-2" />
           </View>
       </View>
       </TouchableOpacity>

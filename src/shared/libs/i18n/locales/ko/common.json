@@ -1,0 +1,21 @@
+{
+  "buttons": {
+    "start": "시작하기",
+    "cancel": "취소",
+    "save": "저장",
+    "saving": "저장 중...",
+    "delete": "삭제",
+    "confirm": "확인",
+    "close": "닫기",
+    "login": "로그인",
+    "logout": "로그아웃",
+    "skip": "나중에 하기"
+  },
+  "alerts": {
+    "success": "성공",
+    "error": "오류",
+    "requiredInfoMissing": "필수 정보가 누락되었습니다."
+  },
+  "loading": "..."
+}
+

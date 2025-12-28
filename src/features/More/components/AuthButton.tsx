@@ -1,4 +1,5 @@
 import { TouchableOpacity, Platform, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import GoogleLogo from '@assets/svgs/GoogleLogo.svg';
 import AppleLogo from '@assets/svgs/AppleLogo.svg';
 import { Text } from '@components/Text';
@@ -6,6 +7,12 @@ import { useHapticFeedback } from '@hooks/useHapticFeedback';
 import {BUTTON_SIZE_MEDIUM} from '@constants/NORMAL';
 export const AuthButton = ({ onPress }: { onPress: () => void }) => {
   const haptic = useHapticFeedback();
+  const { t } = useTranslation();
+  
+  const loginText = Platform.OS === 'ios' 
+    ? t('buttons.signInWithApple', { ns: 'more' })
+    : t('buttons.signInWithGoogle', { ns: 'more' });
+  
   return (
     <TouchableOpacity 
       onPress={() => {
@@ -28,7 +35,7 @@ export const AuthButton = ({ onPress }: { onPress: () => void }) => {
         ) : (
           <GoogleLogo width={20} height={20} />
         )}
-        <Text type="body1" text="Apple로 로그인" className="text-black font-bold" />
+        <Text type="body1" text={loginText} className="text-black font-bold" />
       </View>
     </TouchableOpacity>
   );

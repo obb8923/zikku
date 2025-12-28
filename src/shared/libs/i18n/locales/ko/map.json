@@ -1,0 +1,31 @@
+{
+  "greeting": {
+    "welcome": "반가워요",
+    "dawn": "조용한 새벽이에요",
+    "morning": "상쾌한 아침이에요",
+    "day": "오늘도 힘내요",
+    "evening": "좋은 저녁이에요"
+  },
+  "buttons": {
+    "archive": "기록",
+    "settings": "설정",
+    "login": "로그인하기"
+  },
+  "tabs": {
+    "photoAndCategory": "사진과 카테고리",
+    "locationAndMemo": "위치와 메모"
+  },
+  "category": {
+    "select": "이 버튼을 눌러 카테고리를 선택해주세요"
+  },
+  "memo": {
+    "placeholder": "(선택) 메모를 입력할 수 있어요"
+  },
+  "saveButton": "저장하기",
+  "alerts": {
+    "loginRequired": "로그인 필요",
+    "loginRequiredForPhotoSelection": "사진을 선택하려면 로그인이 필요합니다.",
+    "loginRequiredForPhotoCapture": "사진을 촬영하려면 로그인이 필요합니다."
+  }
+}
+

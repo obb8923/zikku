@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MapStackParamList } from '@nav/stack/MapStack';
+import { useTranslation } from 'react-i18next';
 import { GradientMask } from './GradientMask';
 import { Text } from '@components/index';
 import { LiquidGlassTextButton } from '@components/LiquidGlassTextButton';
@@ -21,21 +22,22 @@ export const MapInitialOverlay: React.FC<MapInitialOverlayProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
+  const { t } = useTranslation();
   const [greeting, setGreeting] = useState<string>('');
 
   const getGreeting = (hour: number): string => {
     if (hour >= 0 && hour < 5) {
       // 심야: 0-4시
-      return '조용한 새벽이에요';
+      return t('greeting.dawn', { ns: 'map' });
     } else if (hour >= 5 && hour < 9) {
       // 새벽: 5-8시
-      return '상쾌한 아침이에요';
+      return t('greeting.morning', { ns: 'map' });
     } else if (hour >= 9 && hour < 18) {
       // 오전, 오후: 9-17시
-      return '오늘도 힘내요';
+      return t('greeting.day', { ns: 'map' });
     } else {
       // 저녁, 밤: 18-23시
-      return '좋은 저녁이에요';
+      return t('greeting.evening', { ns: 'map' });
     }
   };
 
@@ -53,7 +55,7 @@ export const MapInitialOverlay: React.FC<MapInitialOverlayProps> = ({
     const interval = setInterval(updateGreeting, 3600000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [t]);
 
   const handleArchivePress = () => {
     navigation.navigate('Archive');
@@ -78,13 +80,13 @@ export const MapInitialOverlay: React.FC<MapInitialOverlayProps> = ({
       >
         {/* title area */}
         <View className="w-full">
-          <Text type="title1" text="반가워요" className="text-text-component"/>
+          <Text type="title1" text={t('greeting.welcome', { ns: 'map' })} className="text-text-component"/>
           <Text type="title0" text={greeting} className="text-text font-bold"/>
         </View>
         {/* button area */}
         <View className="w-full gap-4">
           <LiquidGlassTextButton
-            text="시작하기"
+            text={t('buttons.start', { ns: 'common' })}
             onPress={onStart}
             size="large"
             style={{ width: '100%' }}
@@ -94,7 +96,7 @@ export const MapInitialOverlay: React.FC<MapInitialOverlayProps> = ({
         {/* tab button area */}
         <View className="w-full gap-4 flex-row justify-between">
           <LiquidGlassTextButton
-            text="기록"
+            text={t('buttons.archive', { ns: 'map' })}
             onPress={handleArchivePress}
             size="large"
             style={{ flex: 1 }}
@@ -102,7 +104,7 @@ export const MapInitialOverlay: React.FC<MapInitialOverlayProps> = ({
             textStyle={{ color: 'black', fontWeight: 'bold' }}
           />
           <LiquidGlassTextButton
-            text="설정"
+            text={t('buttons.settings', { ns: 'map' })}
             onPress={handleMorePress}
             size="large"
             style={{flex: 1}}
