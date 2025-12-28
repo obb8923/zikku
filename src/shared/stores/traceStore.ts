@@ -109,17 +109,11 @@ export const useTraceStore = create<TraceState>((set, get) => ({
   clearOldTraces: () => {
     const todayTraces = get().filterTodayTraces();
     set({ traces: todayTraces });
-    if (__DEV__) {
-      console.log('[TraceStore] Cleared old traces, keeping only today:', todayTraces.length);
-    }
   },
 
   addTrace: (trace: Trace) => {
     // 오늘 날짜인지 확인
     if (!isToday(trace.recorded_at)) {
-      if (__DEV__) {
-        console.log('[TraceStore] Ignoring trace with non-today date:', trace.recorded_at);
-      }
       return;
     }
 
@@ -133,10 +127,6 @@ export const useTraceStore = create<TraceState>((set, get) => ({
       
       return { traces: todayTraces };
     });
-
-    if (__DEV__) {
-      console.log('[TraceStore] Added trace:', trace);
-    }
   },
 
   saveTracesToStorage: async () => {
@@ -144,7 +134,7 @@ export const useTraceStore = create<TraceState>((set, get) => ({
       const todayTraces = get().filterTodayTraces();
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(todayTraces));
     } catch (error) {
-      console.error('[TraceStore] Failed to save traces to storage:', error);
+       
     }
   },
 
@@ -156,13 +146,9 @@ export const useTraceStore = create<TraceState>((set, get) => ({
         // 오늘 데이터만 로드
         const todayTraces = traces.filter(trace => isToday(trace.recorded_at));
         set({ traces: todayTraces });
-        
-        if (__DEV__) {
-          console.log('[TraceStore] Loaded traces from storage:', todayTraces.length);
-        }
       }
     } catch (error) {
-      console.error('[TraceStore] Failed to load traces from storage:', error);
+       
     }
   },
 
@@ -175,7 +161,7 @@ export const useTraceStore = create<TraceState>((set, get) => ({
       };
       await AsyncStorage.setItem(SYNC_STATE_STORAGE_KEY, JSON.stringify(syncState));
     } catch (error) {
-      console.error('[TraceStore] Failed to save sync state to storage:', error);
+       
     }
   },
 
@@ -187,9 +173,6 @@ export const useTraceStore = create<TraceState>((set, get) => ({
         
         // 날짜가 바뀌었으면 동기화 상태 초기화
         if (syncState.lastSyncTime && isDateChanged(syncState.lastSyncTime)) {
-          if (__DEV__) {
-            console.log('[TraceStore] Date changed, resetting sync state');
-          }
           set({
             lastSyncTime: null,
             lastSyncedAt: null,
@@ -200,13 +183,10 @@ export const useTraceStore = create<TraceState>((set, get) => ({
             lastSyncTime: syncState.lastSyncTime,
             lastSyncedAt: syncState.lastSyncedAt,
           });
-          if (__DEV__) {
-            console.log('[TraceStore] Loaded sync state:', syncState);
-          }
         }
       }
     } catch (error) {
-      console.error('[TraceStore] Failed to load sync state from storage:', error);
+      
     }
   },
 
@@ -215,18 +195,11 @@ export const useTraceStore = create<TraceState>((set, get) => ({
     const userId = useAuthStore.getState().userId;
     
     if (!userId) {
-      if (__DEV__) {
-        console.log('[TraceStore] Cannot sync: user not logged in');
-      }
       return;
     }
 
     // 오늘 데이터 중 아직 Supabase에 저장하지 않은 것만 동기화
     const todayTraces = filterTodayTraces();
-
-    if (__DEV__) {
-      console.log('[TraceStore] Syncing to Supabase - Total today traces:', todayTraces.length, 'Last synced at:', lastSyncedAt);
-    }
 
     // 마지막으로 저장한 recorded_at 이후의 것만 선택
     const tracesToUpload =
@@ -237,14 +210,7 @@ export const useTraceStore = create<TraceState>((set, get) => ({
         : todayTraces;
     
     if (tracesToUpload.length === 0) {
-      if (__DEV__) {
-        console.log('[TraceStore] No new traces to sync');
-      }
       return;
-    }
-
-    if (__DEV__) {
-      console.log('[TraceStore] Uploading', tracesToUpload.length, 'traces to Supabase');
     }
 
     // Supabase에 저장할 데이터 준비 (id 제외)
@@ -260,12 +226,7 @@ export const useTraceStore = create<TraceState>((set, get) => ({
         .select();
 
       if (error) {
-        console.error('[TraceStore] Failed to sync traces:', error);
         return;
-      }
-
-      if (__DEV__) {
-        console.log('[TraceStore] Successfully synced', data?.length || 0, 'traces to Supabase');
       }
 
       // 이번에 업로드한 trace 중 가장 최신 recorded_at을 기록
@@ -291,17 +252,19 @@ export const useTraceStore = create<TraceState>((set, get) => ({
         get().clearOldTraces();
       }
     } catch (error) {
-      console.error('[TraceStore] Error syncing traces:', error);
+       
     }
   },
 
   startTracking: () => {
+    // TODO: 다음 업데이트에서 trace 기능 활성화 예정
+    // trace 로직 일시 중지
+    return;
+    
+    /* 주석 처리된 trace 로직 - 다음 업데이트에서 활성화 예정
     const { isTracking, trackingIntervalId, syncIntervalId } = get();
 
     if (isTracking) {
-      if (__DEV__) {
-        console.log('[TraceStore] Tracking already started');
-      }
       return;
     }
 
@@ -346,13 +309,6 @@ export const useTraceStore = create<TraceState>((set, get) => ({
           );
 
           if (distance < MIN_MOVE_METERS) {
-            if (__DEV__) {
-              console.log(
-                '[TraceStore] Skip trace: user not moved enough (',
-                distance.toFixed(2),
-                'm )',
-              );
-            }
             return;
           }
         }
@@ -364,10 +320,6 @@ export const useTraceStore = create<TraceState>((set, get) => ({
           recorded_at: new Date().toISOString(),
         };
         get().addTrace(trace);
-      } else {
-        if (__DEV__) {
-          console.log('[TraceStore] Cannot add trace: location not available');
-        }
       }
     }, TRACKING_INTERVAL);
 
@@ -383,10 +335,7 @@ export const useTraceStore = create<TraceState>((set, get) => ({
     });
 
     // 초기화 함수에서 동기화를 실행하므로 여기서는 호출하지 않음
-
-    if (__DEV__) {
-      console.log('[TraceStore] Started tracking');
-    }
+    */
   },
 
   stopTracking: () => {
@@ -414,10 +363,6 @@ export const useTraceStore = create<TraceState>((set, get) => ({
       trackingIntervalId: null,
       syncIntervalId: null,
     });
-
-    if (__DEV__) {
-      console.log('[TraceStore] Stopped tracking');
-    }
   },
 }));
 

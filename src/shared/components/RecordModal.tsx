@@ -237,7 +237,6 @@ export const RecordModal = ({
         },
       ]);
     } catch (error: any) {
-      console.error('저장 오류:', error);
       Alert.alert('오류', error.message || '레코드 저장에 실패했습니다.');
     } finally {
       setIsSaving(false);

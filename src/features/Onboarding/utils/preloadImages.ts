@@ -22,7 +22,7 @@ export const preloadOnboardingImages = async (): Promise<void> => {
     await Promise.all(preloadPromises);
   } catch (error) {
     // 프리로딩 실패해도 앱은 정상 동작해야 하므로 에러를 무시합니다
-    console.warn('온보딩 이미지 프리로딩 실패:', error);
+     
   }
 };
 

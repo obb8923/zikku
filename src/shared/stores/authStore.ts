@@ -33,9 +33,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoggedIn: true,
           userId: session.user.id
         });
-        if (__DEV__) {
-          console.log('[AuthStore] isLoggedIn set to true in checkLoginStatus()');
-        }
         // 로그인 상태 확인 후 프로필 가져오기
         await get().fetchUserProfile();
       } else {
@@ -46,7 +43,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         });
       }
     } catch (error) {
-      console.error('Error checking login status:', error);
       set({ 
         isLoggedIn: false,
         userId: null,
@@ -62,27 +58,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       
       // 프로필을 가져오지 못한 경우 로그아웃 처리
       if (!profile) {
-        console.log('[AuthStore] 프로필을 가져오지 못함. 로그아웃 처리합니다.');
         await get().logout();
         return;
       }
       
       set({ userProfile: profile });
-      if (__DEV__) {
-        console.log('[AuthStore] User profile fetched:', profile);
-      }
     } catch (error) {
-      console.error('[AuthStore] Error fetching user profile:', error);
       // 에러 발생 시에도 로그아웃 처리
-      console.log('[AuthStore] 프로필 가져오기 에러 발생. 로그아웃 처리합니다.');
       await get().logout();
     }
   },
   login: () => {
     set({ isLoggedIn: true, isLoading: false });
-    if (__DEV__) {
-      console.log('[AuthStore] isLoggedIn set to true in login()');
-    }
   },
   logout: async () => {
     set({ isLoading: true });
@@ -94,11 +81,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         userId: null,
         userProfile: null,
       });
-      if (__DEV__) {
-        console.log('[AuthStore] 로그아웃 완료');
-      }
     } catch (error) {
-      console.error('Error logging out:', error);
       // 에러가 발생해도 로그아웃 상태로 설정
       set({ 
         isLoggedIn: false,
@@ -127,7 +110,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         .eq('id', user.id);
 
       if (deleteError) {
-        console.error('users 테이블 삭제 오류:', deleteError);
         Alert.alert('오류', '사용자 데이터 삭제 중 오류가 발생했습니다.');
         set({ isLoading: false });
         return false;
@@ -143,7 +125,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ isLoading: false });
       return true;
     } catch (error) {
-      console.error('Error deleting account:', error);
       Alert.alert('오류', '회원 탈퇴 중 오류가 발생했습니다.');
       set({ isLoading: false });
       return false;
@@ -161,11 +142,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
       await GoogleSignin.hasPlayServices();
       const userInfo: any = await GoogleSignin.signIn();
-      console.log('Google UserInfo:', JSON.stringify(userInfo, null, 2));
 
       if (userInfo && userInfo.data && userInfo.data.idToken) {
         const idToken = userInfo.data.idToken;
-        console.log('Google ID Token received:', idToken);
 
         const { data, error } = await supabase.auth.signInWithIdToken({
           provider: 'google',
@@ -178,12 +157,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         });
 
         if (error) {
-          console.error('Supabase 로그인 에러 상세:', {
-            message: error.message,
-            status: error.status,
-            name: error.name,
-            details: error
-          });
           let errorMessage = '로그인 중 오류가 발생했습니다.';
           if (error.status === 400) {
             errorMessage = '인증 정보가 올바르지 않습니다.';
@@ -193,35 +166,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           Alert.alert('Google 로그인 오류', errorMessage);
           set({ isLoggedIn: false });
         } else if (data.session) {
-          console.log('구글 로그인 성공, 현재 사용자 정보:', data.user);
-          
           set({ 
             isLoggedIn: true,
             userId: data.user.id 
           });
-          if (__DEV__) {
-            console.log('[AuthStore] isLoggedIn set to true in handleGoogleLogin()');
-          }
           // 로그인 성공 후 프로필 가져오기
           await get().fetchUserProfile();
           // 로그인 성공 후 레코드 가져오기
-          useRecordStore.getState().fetchRecords().catch((error) => {
-            if (__DEV__) console.error('[AuthStore] Error fetching records after login:', error);
-          });
+          useRecordStore.getState().fetchRecords().catch(() => {});
         }
       } else {
-        console.error('Google ID 토큰을 받지 못했습니다:', userInfo);
         Alert.alert('Google 로그인 오류', 'Google 인증 정보를 받지 못했습니다.');
         set({ isLoggedIn: false });
       }
     } catch (error: any) {
       if (error.code) {
-        console.log('Google Sign-In error code:', error.code, error.message);
         if (String(error.code) !== '12501' && String(error.code) !== 'SIGN_IN_CANCELLED') {
           Alert.alert('Google 로그인 오류', `오류 코드: ${error.code} - ${error.message}`);
         }
       } else {
-        console.log('Google Sign-In unexpected error:', error);
         Alert.alert('Google 로그인 오류', '알 수 없는 오류가 발생했습니다.');
       }
       set({ isLoggedIn: false });
@@ -252,7 +215,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         provider: 'apple',
         token: idToken,
       });
-      // console.log('data: ',data)
 
       if (error) {
         Alert.alert('Apple 로그인 오류', error.message || '로그인 중 오류가 발생했습니다.');
@@ -262,15 +224,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoggedIn: true,
           userId: data.user.id,
         });
-        if (__DEV__) {
-          console.log('[AuthStore] isLoggedIn set to true in handleAppleLogin()');
-        }
         // 로그인 성공 후 프로필 가져오기
         await get().fetchUserProfile();
         // 로그인 성공 후 레코드 가져오기
-        useRecordStore.getState().fetchRecords().catch((error) => {
-          if (__DEV__) console.error('[AuthStore] Error fetching records after login:', error);
-        });
+        useRecordStore.getState().fetchRecords().catch(() => {});
       }
     } catch (error: any) {
       Alert.alert('Apple 로그인 오류', error.message || '알 수 없는 오류가 발생했습니다.');
@@ -303,15 +260,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoggedIn: true,
           userId: data.user.id,
         });
-        if (__DEV__) {
-          console.log('[AuthStore] isLoggedIn set to true in handleEmailLogin()');
-        }
         // 로그인 성공 후 프로필 가져오기
         await get().fetchUserProfile();
         // 로그인 성공 후 레코드 가져오기
-        useRecordStore.getState().fetchRecords().catch((error) => {
-          if (__DEV__) console.error('[AuthStore] Error fetching records after login:', error);
-        });
+        useRecordStore.getState().fetchRecords().catch(() => {});
         
         return true;
       }

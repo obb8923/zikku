@@ -26,9 +26,7 @@ export const useAppInitialization = () => {
             webClientId: SUPABASE_WEB_CLIENT_KEY,
             scopes: ['profile', 'email'],
           });
-          if (__DEV__) console.log('[useAppInitialization] Google Sign-In configured');
         } catch (error) {
-          if (__DEV__) console.error('[useAppInitialization] Google Sign-In configuration error:', error);
         }
       }
       try {
@@ -36,10 +34,7 @@ export const useAppInitialization = () => {
         if (isMounted) {
           try {
             await checkOnboardingStatus();
-            if (__DEV__) console.log('[useAppInitialization] Onboarding status checked');
           } catch (error) {
-            if (__DEV__) console.error('[useAppInitialization] Error checking onboarding:', error);
-            // 온보딩 상태 확인 실패는 치명적이지 않으므로 계속 진행
           }
         }
 
@@ -47,21 +42,17 @@ export const useAppInitialization = () => {
         if (isMounted) {
           try {
             await checkLoginStatus();
-            if (__DEV__) console.log('[useAppInitialization] Login status checked');
-            // checkLoginStatus 내부에서 fetchUserProfile이 호출됨
           } catch (error) {
-            if (__DEV__) console.error('[useAppInitialization] Error checking login status:', error);
+             
           }
         }
 
         // 3. 로컬 스토리지에서 records 불러오기
         if (isMounted) {
           try {
-            console.log('[useAppInitialization] 로컬 스토리지에서 records 불러오기 시작');
             await loadRecordsFromStorage();
-            if (__DEV__) console.log('[useAppInitialization] Records loaded from storage');
           } catch (error) {
-            if (__DEV__) console.error('[useAppInitialization] Error loading records from storage:', error);
+             
           }
         }
 
@@ -70,16 +61,10 @@ export const useAppInitialization = () => {
           try {
             const userId = useAuthStore.getState().userId;
             if (userId) {
-              console.log('[useAppInitialization] 로그인 상태 확인됨, DB에서 records 가져오기 시작, userId:', userId);
               // 비동기로 실행하되 초기화를 막지 않음
-              fetchRecords().catch((error) => {
-                if (__DEV__) console.error('[useAppInitialization] Error fetching records from DB:', error);
-              });
-            } else {
-              console.log('[useAppInitialization] 로그인되지 않음, DB에서 records 가져오기 건너뜀');
+              fetchRecords().catch(() => {});
             }
           } catch (error) {
-            if (__DEV__) console.error('[useAppInitialization] Error initiating record fetch:', error);
           }
         }
 
@@ -88,7 +73,6 @@ export const useAppInitialization = () => {
         }
       } catch (error) {
         const err = error instanceof Error ? error : new Error(String(error));
-        if (__DEV__) console.error('[useAppInitialization] Initialization error:', err);
         if (isMounted) {
           setInitializationError(err);
           setIsInitialized(true); // 에러가 있어도 초기화 완료로 표시하여 UI가 렌더링될 수 있도록

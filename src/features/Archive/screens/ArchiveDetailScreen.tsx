@@ -197,7 +197,6 @@ export const ArchiveDetailScreen = () => {
       // 저장 성공 후 화면 닫기
       navigation.goBack();
     } catch (error: any) {
-      console.error('수정 오류:', error);
       Alert.alert('오류', error.message || '레코드 수정에 실패했습니다.');
       setIsSaving(false);
     }
@@ -235,7 +234,6 @@ export const ArchiveDetailScreen = () => {
                 },
               ]);
             } catch (error: any) {
-              console.error('삭제 오류:', error);
               Alert.alert('오류', error.message || '레코드 삭제에 실패했습니다.');
             } finally {
               setIsSaving(false);
@@ -256,8 +254,6 @@ export const ArchiveDetailScreen = () => {
     );
   }
   useEffect(() => {
-    console.log('isCategoryModalVisible', isCategoryModalVisible);
-
     return () => {
     };
   }, [isCategoryModalVisible]);

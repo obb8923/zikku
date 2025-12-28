@@ -57,8 +57,6 @@ export const MoreScreen = () => {
 
   const handleCategorySelect = (category: ChipTypeKey) => {
     // 카테고리 선택 시 처리 로직 (필요에 따라 수정)
-    console.log('Selected category:', category);
-    // 예: Alert.alert('카테고리 선택', `선택된 카테고리: ${category}`);
   };
 
   const handleCategoryModalClose = () => {

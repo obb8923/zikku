@@ -88,7 +88,6 @@ export const MyInfoScreen = () => {
         Alert.alert('오류', '프로필 업데이트에 실패했습니다.');
       }
     } catch (error: any) {
-      console.error('프로필 업데이트 오류:', error);
       Alert.alert('오류', error.message || '프로필 업데이트에 실패했습니다.');
     } finally {
       setIsSaving(false);

@@ -23,7 +23,6 @@ export const useOnboardingStore = create<OnboardingStore>((set) => ({
         isLoading: false,
       });
     } catch (error) {
-      console.error('온보딩 상태 확인 중 오류 발생:', error);
       set({
         isOnboardingCompleted: false,
         isLoading: false,
@@ -39,7 +38,7 @@ export const useOnboardingStore = create<OnboardingStore>((set) => ({
       );
       set({ isOnboardingCompleted: true });
     } catch (error) {
-      console.error('온보딩 완료 처리 중 오류 발생:', error);
+       
     }
   },
 }));

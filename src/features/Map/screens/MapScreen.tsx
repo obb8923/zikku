@@ -409,7 +409,8 @@ export const MapScreen = () => {
         region={currentRegion || undefined}
         onRegionChangeComplete={handleRegionChangeComplete}
       >
-        {traces.length > 1 && traces.slice(1).map((trace, index) => {
+        {/* TODO: 다음 업데이트에서 trace 기능 활성화 예정 */}
+        {/* {traces.length > 1 && traces.slice(1).map((trace, index) => {
           const prevTrace = traces[index];
           return (
             <Polyline
@@ -428,7 +429,7 @@ export const MapScreen = () => {
               strokeWidth={getPolylineStrokeWidth(currentRegion)}
             />
           );
-        })}
+        })} */}
         
         {/* Records 마커 표시 */}
         {records.map((record) => {
