@@ -38,7 +38,7 @@ const STORAGE_KEY = '@zikku_traces_today';
 const SYNC_STATE_STORAGE_KEY = '@zikku_traces_sync_state';
 const TRACKING_INTERVAL = 5000; // 5초
 const SYNC_INTERVAL = 5 * 60 * 1000; // 5분
-const MIN_MOVE_METERS = 1; // 이 거리 이상 움직였을 때만 기록
+const MIN_MOVE_METERS = 1; // 이 거리 이상 움직였을 때만기록
 
 interface SyncState {
   lastSyncTime: number | null;
@@ -229,7 +229,7 @@ export const useTraceStore = create<TraceState>((set, get) => ({
         return;
       }
 
-      // 이번에 업로드한 trace 중 가장 최신 recorded_at을 기록
+      // 이번에 업로드한 trace 중 가장 최신 recorded_at을기록
       const latestUploaded =
         tracesToUpload.reduce((latest, cur) =>
           new Date(cur.recorded_at) > new Date(latest.recorded_at)
@@ -299,7 +299,7 @@ export const useTraceStore = create<TraceState>((set, get) => ({
         const { traces } = get();
         const last = traces.length > 0 ? traces[traces.length - 1] : null;
 
-        // 마지막 위치와의 거리가 너무 짧으면 기록하지 않음 (정지/미세한 흔들림 필터링)
+        // 마지막 위치와의 거리가 너무 짧으면기록하지 않음 (정지/미세한 흔들림 필터링)
         if (last) {
           const distance = getDistanceMeters(
             last.latitude,

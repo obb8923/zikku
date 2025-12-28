@@ -51,7 +51,7 @@ const getGalleryPermission = () => {
 
 // 4. 권한 상태 업데이트 함수
 // 매핑 객체를 활용해 permission에 해당하는 상태(camera, photoLibrary, location)를 일관성 있게 업데이트합니다.
-const updatePermissionState = (permission: string, isGranted: boolean, set: any) => {
+const updatePermissionState = (permission: string, isGranted: boolean, set: (partial: Partial<PermissionState>) => void) => {
   const platform = Platform.OS as 'ios' | 'android';
   const permissionMapping = PERMISSION_MAPPING[platform];
   const permissionKey = permissionMapping[permission as keyof typeof permissionMapping];

@@ -52,8 +52,9 @@ export const useLocationStore = create<LocationState>((set, get) => ({
         },
         { enableHighAccuracy: false, timeout: 5000, maximumAge: 10000 }
       );
-    } catch (err: any) {
-      set({ error: `Failed to fetch location: ${err.message}`, isLoading: false });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류';
+      set({ error: `Failed to fetch location: ${errorMessage}`, isLoading: false });
     }
   },
   setLocation: (latitude: number, longitude: number) => {
@@ -96,8 +97,9 @@ export const useLocationStore = create<LocationState>((set, get) => ({
       );
 
       set({ watchId: id });
-    } catch (err: any) {
-      set({ error: `Failed to start watching location: ${err.message}` });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류';
+      set({ error: `Failed to start watching location: ${errorMessage}` });
     }
   },
   stopWatchingLocation: () => {

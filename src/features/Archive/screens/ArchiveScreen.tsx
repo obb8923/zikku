@@ -65,7 +65,7 @@ export const ArchiveScreen = () => {
           <Text type="title3" text={item.title} style={{ fontWeight: '600', color: COLORS.TEXT_COMPONENT }} />
         </View>
         
-        {/* 같은 월의 기록들을 가로로 배치 (flex-wrap) */}
+        {/* 같은 월의기록들을 가로로 배치 (flex-wrap) */}
         <View className="flex-row flex-wrap gap-2">
           {item.records.map((record) => {
             const chipType = getChipTypeFromCategory(record.category);
@@ -97,7 +97,7 @@ export const ArchiveScreen = () => {
   return (
     <Background isStatusBarGap={false}>
       <View className="pt-4 px-6 mb-4 flex-row justify-between items-center">
-          <Text type="title3" text="기억 저장소" style={{ fontWeight: '600', color: COLORS.TEXT_2 }} />
+          <Text type="title3" text="기록 저장소" style={{ fontWeight: '600', color: COLORS.TEXT_2 }} />
           <LiquidGlassButton size="small" onPress={() => navigation.goBack()}>
             <XIcon width={20} height={20} color={COLORS.TEXT} />
           </LiquidGlassButton>
@@ -108,12 +108,12 @@ export const ArchiveScreen = () => {
             <View className="items-center gap-2">
               <Text 
                 type="title3" 
-                text="아직 저장된 기억이 없습니다" 
+                text="아직 저장된기록이 없습니다" 
                 className="text-text-2 font-bold"
               />
               <Text 
                 type="body2" 
-                text="지도를 통해 새로운 기억을 만들어보세요" 
+                text="지도를 통해 새로운기록을 만들어보세요" 
                 className="text-text-2 text-center"
               />
             </View>

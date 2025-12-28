@@ -8,11 +8,11 @@ import { LiquidGlassButton } from '@components/LiquidGlassButton';
 import { COLORS } from '@constants/COLORS';
 import XIcon from '@assets/svgs/X.svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuthStore } from '@/shared/stores/authStore';
+import { useAuthStore } from '@stores/authStore';
 import { useEffect, useState, useRef } from 'react';
-import { updateUserProfile, uploadAvatarImage, type UserProfile, type ImageData } from '@/shared/libs/supabase/userProfileService';
+import { updateUserProfile, uploadAvatarImage, type UserProfile, type ImageData } from '@libs/supabase/userProfileService';
 import { launchImageLibrary, ImagePickerResponse } from 'react-native-image-picker';
-import { usePermissionStore } from '@/shared/stores/permissionStore';
+import { usePermissionStore } from '@stores/permissionStore';
 
 type MyInfoScreenNavigationProp = NativeStackNavigationProp<MapStackParamList, 'MyInfo'>;
 
@@ -94,8 +94,9 @@ export const MyInfoScreen = () => {
       } else {
         Alert.alert('오류', '프로필 업데이트에 실패했습니다.');
       }
-    } catch (error: any) {
-      Alert.alert('오류', error.message || '프로필 업데이트에 실패했습니다.');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : '프로필 업데이트에 실패했습니다.';
+      Alert.alert('오류', errorMessage);
     } finally {
       setIsSaving(false);
     }

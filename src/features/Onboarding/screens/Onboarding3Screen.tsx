@@ -68,7 +68,7 @@ export const Onboarding3Screen = () => {
             className="text-left text-black font-bold mb-2"
           />
           <Text
-            text="순간을 기록하기 위해 다음 권한이 필요해요"
+            text="순간을기록하기 위해 다음 권한이 필요해요"
             type="body3"
             className="text-left text-text-2"
           />
@@ -92,7 +92,7 @@ export const Onboarding3Screen = () => {
           <View className="h-[1px] bg-gray-200 my-4" />
           <PermissionRow
             title="위치"
-            description="위치를 기록하기 위해 필요해요"
+            description="위치를기록하기 위해 필요해요"
             granted={locationPermission}
             Icon={MapIcon}
           />

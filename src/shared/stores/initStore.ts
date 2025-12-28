@@ -27,6 +27,9 @@ export const useAppInitialization = () => {
             scopes: ['profile', 'email'],
           });
         } catch (error) {
+          if (__DEV__) {
+            console.error('Google Sign-In 설정 실패:', error);
+          }
         }
       }
       try {
@@ -35,6 +38,9 @@ export const useAppInitialization = () => {
           try {
             await checkOnboardingStatus();
           } catch (error) {
+            if (__DEV__) {
+              console.error('온보딩 상태 확인 실패:', error);
+            }
           }
         }
 
@@ -43,7 +49,9 @@ export const useAppInitialization = () => {
           try {
             await checkLoginStatus();
           } catch (error) {
-             
+            if (__DEV__) {
+              console.error('로그인 상태 확인 실패:', error);
+            }
           }
         }
 
@@ -52,7 +60,9 @@ export const useAppInitialization = () => {
           try {
             await loadRecordsFromStorage();
           } catch (error) {
-             
+            if (__DEV__) {
+              console.error('로컬 스토리지에서 records 불러오기 실패:', error);
+            }
           }
         }
 
@@ -62,9 +72,16 @@ export const useAppInitialization = () => {
             const userId = useAuthStore.getState().userId;
             if (userId) {
               // 비동기로 실행하되 초기화를 막지 않음
-              fetchRecords().catch(() => {});
+              fetchRecords().catch((error) => {
+                if (__DEV__) {
+                  console.error('DB에서 records 가져오기 실패:', error);
+                }
+              });
             }
           } catch (error) {
+            if (__DEV__) {
+              console.error('records 가져오기 초기화 실패:', error);
+            }
           }
         }
 

@@ -3,7 +3,7 @@ import GoogleLogo from '@assets/svgs/GoogleLogo.svg';
 import AppleLogo from '@assets/svgs/AppleLogo.svg';
 import { Text } from '@components/Text';
 import { useHapticFeedback } from '@hooks/useHapticFeedback';
-import {BUTTON_SIZE_MEDIUM} from '@/shared/constants/NORMAL';
+import {BUTTON_SIZE_MEDIUM} from '@constants/NORMAL';
 export const AuthButton = ({ onPress }: { onPress: () => void }) => {
   const haptic = useHapticFeedback();
   return (

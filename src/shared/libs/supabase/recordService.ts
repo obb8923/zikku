@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import RNFS from 'react-native-fs';
 import { decode as decodeBase64 } from 'base64-arraybuffer';
 import ImageResizer from '@bam.tech/react-native-image-resizer';
+import type { Record } from '@stores/recordStore';
 
 export interface CreateRecordData {
   user_id: string;
@@ -264,15 +265,15 @@ export async function uploadImageToStorage(
       .getPublicUrl(filePath);
     
     return urlData.publicUrl;
-  } catch (error: any) {
+  } catch (error: unknown) {
     throw error;
   }
 }
 
 /**
- * 레코드를 Supabase에 저장합니다.
- * @param recordData 레코드 데이터
- * @returns 저장된 레코드 데이터
+ * 기록를 Supabase에 저장합니다.
+ * @param recordData 기록 데이터
+ * @returns 저장된 기록 데이터
  */
 export async function createRecord(
   recordData: CreateRecordData,
@@ -293,24 +294,24 @@ export async function createRecord(
       .single();
     
     if (error) {
-      throw new Error(`레코드 저장 실패: ${error.message}`);
+      throw new Error(`기록 저장 실패: ${error.message}`);
     }
     
     return data;
-  } catch (error: any) {
+  } catch (error: unknown) {
     throw error;
   }
 }
 
 /**
- * 이미지 업로드 및 레코드 저장을 한 번에 처리합니다.
+ * 이미지 업로드 및 기록 저장을 한 번에 처리합니다.
  * @param imageData 이미지 데이터 (uri, fileName, type 등)
  * @param userId 사용자 ID
  * @param latitude 위도
  * @param longitude 경도
  * @param category 카테고리
  * @param memo 메모 (선택)
- * @returns 저장된 레코드 데이터
+ * @returns 저장된 기록 데이터
  */
 export async function saveRecord(
   imageData: ImageData,
@@ -324,7 +325,7 @@ export async function saveRecord(
     // 1. 이미지 업로드
     const imagePath = await uploadImageToStorage(imageData, userId);
     
-    // 2. 레코드 저장
+    // 2. 기록 저장
     const record = await createRecord({
       user_id: userId,
       latitude,
@@ -335,16 +336,16 @@ export async function saveRecord(
     });
     
     return record;
-  } catch (error: any) {
+  } catch (error: unknown) {
     throw error;
   }
 }
 
 /**
- * 레코드를 Supabase에서 업데이트합니다.
- * @param recordId 레코드 ID
+ * 기록를 Supabase에서 업데이트합니다.
+ * @param recordId 기록 ID
  * @param updateData 업데이트할 데이터
- * @returns 업데이트된 레코드 데이터
+ * @returns 업데이트된 기록 데이터
  */
 export async function updateRecord(
   recordId: string,
@@ -364,18 +365,18 @@ export async function updateRecord(
       .single();
     
     if (error) {
-      throw new Error(`레코드 업데이트 실패: ${error.message}`);
+      throw new Error(`기록 업데이트 실패: ${error.message}`);
     }
     
     return data;
-  } catch (error: any) {
+  } catch (error: unknown) {
     throw error;
   }
 }
 
 /**
- * 레코드를 Supabase에서 삭제합니다.
- * @param recordId 레코드 ID
+ * 기록를 Supabase에서 삭제합니다.
+ * @param recordId 기록 ID
  * @returns 삭제 성공 여부
  */
 export async function deleteRecord(recordId: string): Promise<void> {
@@ -386,9 +387,32 @@ export async function deleteRecord(recordId: string): Promise<void> {
       .eq('id', recordId);
     
     if (error) {
-      throw new Error(`레코드 삭제 실패: ${error.message}`);
+      throw new Error(`기록 삭제 실패: ${error.message}`);
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    throw error;
+  }
+}
+
+/**
+ * 사용자의 모든 기록를 가져옵니다.
+ * @param userId 사용자 ID
+ * @returns 기록 배열
+ */
+export async function fetchRecords(userId: string): Promise<Record[]> {
+  try {
+    const { data, error } = await supabase
+      .from('records')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      throw new Error(`기록 조회 실패: ${error.message}`);
+    }
+    
+    return data || [];
+  } catch (error: unknown) {
     throw error;
   }
 }
@@ -399,5 +423,6 @@ export const RecordService = {
   saveRecord,
   updateRecord,
   deleteRecord,
+  fetchRecords,
 };
 

@@ -14,7 +14,7 @@ import { MapDebugControls } from '../components/MapDebugControls';
 import { MapControls } from '../components/MapControls';
 import { MapInitialOverlay } from '../components/MapInitialOverlay';
 import { RecordModal } from '@components/index';
-import { POLYLINE_STROKE_CONFIG, INITIAL_MAP_REGION, ZOOM_LEVEL, getMarkerImage } from '@/features/Map/constants/MAP';
+import { POLYLINE_STROKE_CONFIG, INITIAL_MAP_REGION, ZOOM_LEVEL, getMarkerImage } from '@features/Map/constants/MAP';
 import { getPolylineStrokeWidth } from '../utils/polylineUtils';
 import { zoomToDelta, deltaToZoom, getMarkerSize } from '../utils/mapUtils';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -465,7 +465,7 @@ export const MapScreen = () => {
 
       
 
-      {/* 이미지 선택 후 기록 생성 모달 */}
+      {/* 이미지 선택 후기록 생성 모달 */}
       <RecordModal
         visible={isCreateModalVisible}
         image={selectedImage}

@@ -3,7 +3,7 @@ import { MapScreen } from "@features/Map/screens/MapScreen";
 import { MoreScreen } from "@features/More/screens/MoreScreen";
 import { ArchiveScreen } from "@features/Archive/screens/ArchiveScreen";
 import { ArchiveDetailScreen } from "@features/Archive/screens/ArchiveDetailScreen";
-import { MyInfoScreen } from "@/features/MyInfo/screens/MyInfoScreen";
+import { MyInfoScreen } from "@features/MyInfo/screens/MyInfoScreen";
 import { WebViewScreen } from "@features/More/screens/WebViewScreen";
 export type MapStackParamList = {
     Map: undefined,

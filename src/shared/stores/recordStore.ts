@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '@libs/supabase/supabase';
+import { fetchRecords as fetchRecordsFromService } from '@libs/supabase/recordService';
 import { useAuthStore } from './authStore';
 
 export interface Record {
@@ -49,24 +49,11 @@ export const useRecordStore = create<RecordState>((set, get) => ({
     set({ isLoading: true, error: null });
     
     try {
-      const { data, error } = await supabase
-        .from('records')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+      const records = await fetchRecordsFromService(userId);
       
-      if (error) {
-        set({ 
-          records: [], 
-          error: error.message,
-          isLoading: false,
-        });
-        return;
+      if (__DEV__) {
+        console.log(`기록를 가져왔을때 가져온 기록 개수: ${records.length}, 내용:`, records);
       }
-      
-      const records = data || [];
-      
-      console.log(`레코드를 가져왔을때 가져온 레코드 개수: ${records.length}, 내용:`, records);
       
       // 상태 업데이트
       set({ 
@@ -77,10 +64,11 @@ export const useRecordStore = create<RecordState>((set, get) => ({
       
       // 로컬 스토리지에 저장
       await get().saveRecordsToStorage();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.';
       set({ 
         records: [], 
-        error: error.message || '알 수 없는 오류가 발생했습니다.',
+        error: errorMessage,
         isLoading: false,
       });
     }
@@ -139,6 +127,9 @@ export const useRecordStore = create<RecordState>((set, get) => ({
       const { records } = get();
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(records));
     } catch (error) {
+      if (__DEV__) {
+        console.error('로컬 스토리지에 records 저장 실패:', error);
+      }
     }
   },
   

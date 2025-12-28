@@ -8,15 +8,15 @@ import { useAuthStore } from '@stores/authStore';
 import { useRecordStore } from '@stores/recordStore';
 import { DEVICE_HEIGHT, DEVICE_WIDTH } from '@constants/NORMAL';
 import { BUTTON_SIZE_MEDIUM } from '@constants/NORMAL';
-import { INITIAL_MAP_REGION, ZOOM_LEVEL } from '@/features/Map/constants/MAP';
+import { INITIAL_MAP_REGION, ZOOM_LEVEL } from '@features/Map/constants/MAP';
 import { CHIP_TYPE, type ChipTypeKey } from '@constants/CHIP';
 import { Chip, LiquidGlassButton, LiquidGlassInput, LiquidGlassView, Text, CategorySelectModal } from '@components/index';
-import { MapControls } from '@/features/Map/components/MapControls';
+import { MapControls } from '@features/Map/components/MapControls';
 import { saveRecord } from '@libs/supabase/recordService';
 import PlusSmallIcon from '@assets/svgs/PlusSmall.svg';
 import MarkerPinIcon from '@assets/svgs/MarkerPin.svg';
 import {LiquidGlassTextButton} from '@components/index';
-import { zoomToDelta } from '@/features/Map/utils/mapUtils';
+import { zoomToDelta } from '@features/Map/utils/mapUtils';
 
 interface ImageData {
   uri: string;
@@ -223,7 +223,7 @@ export const RecordModal = ({
         addRecord(savedRecord);
       }
       
-      Alert.alert('성공', '레코드가 저장되었습니다.', [
+      Alert.alert('성공', '기록가 저장되었습니다.', [
         {
           text: '확인',
           onPress: () => {
@@ -236,8 +236,9 @@ export const RecordModal = ({
           },
         },
       ]);
-    } catch (error: any) {
-      Alert.alert('오류', error.message || '레코드 저장에 실패했습니다.');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : '기록 저장에 실패했습니다.';
+      Alert.alert('오류', errorMessage);
     } finally {
       setIsSaving(false);
     }

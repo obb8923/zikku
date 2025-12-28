@@ -17,6 +17,7 @@ interface AuthState {
   handleGoogleLogin: () => Promise<void>;
   handleAppleLogin: () => Promise<void>;
   handleEmailLogin: (email: string, password: string) => Promise<boolean>;
+  handlePostLogin: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -24,6 +25,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: false,
   userId: null,
   userProfile: null,
+  
+  // 로그인 성공 후 공통 후처리 로직
+  handlePostLogin: async () => {
+    // 프로필 가져오기
+    await get().fetchUserProfile();
+    // 기록 가져오기 (비동기로 실행하되 에러는 무시)
+    useRecordStore.getState().fetchRecords().catch(() => {});
+  },
   checkLoginStatus: async () => {
     set({ isLoading: true });
     try {
@@ -141,7 +150,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
       await GoogleSignin.hasPlayServices();
-      const userInfo: any = await GoogleSignin.signIn();
+      const userInfo = await GoogleSignin.signIn();
 
       if (userInfo && userInfo.data && userInfo.data.idToken) {
         const idToken = userInfo.data.idToken;
@@ -170,19 +179,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             isLoggedIn: true,
             userId: data.user.id 
           });
-          // 로그인 성공 후 프로필 가져오기
-          await get().fetchUserProfile();
-          // 로그인 성공 후 레코드 가져오기
-          useRecordStore.getState().fetchRecords().catch(() => {});
+          // 로그인 성공 후 공통 후처리
+          await get().handlePostLogin();
         }
       } else {
         Alert.alert('Google 로그인 오류', 'Google 인증 정보를 받지 못했습니다.');
         set({ isLoggedIn: false });
       }
-    } catch (error: any) {
-      if (error.code) {
-        if (String(error.code) !== '12501' && String(error.code) !== 'SIGN_IN_CANCELLED') {
-          Alert.alert('Google 로그인 오류', `오류 코드: ${error.code} - ${error.message}`);
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'code' in error) {
+        const errorCode = String(error.code);
+        if (errorCode !== '12501' && errorCode !== 'SIGN_IN_CANCELLED') {
+          const errorMessage = 'message' in error ? String(error.message) : '알 수 없는 오류';
+          Alert.alert('Google 로그인 오류', `오류 코드: ${errorCode} - ${errorMessage}`);
         }
       } else {
         Alert.alert('Google 로그인 오류', '알 수 없는 오류가 발생했습니다.');
@@ -224,13 +233,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoggedIn: true,
           userId: data.user.id,
         });
-        // 로그인 성공 후 프로필 가져오기
-        await get().fetchUserProfile();
-        // 로그인 성공 후 레코드 가져오기
-        useRecordStore.getState().fetchRecords().catch(() => {});
+        // 로그인 성공 후 공통 후처리
+        await get().handlePostLogin();
       }
-    } catch (error: any) {
-      Alert.alert('Apple 로그인 오류', error.message || '알 수 없는 오류가 발생했습니다.');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.';
+      Alert.alert('Apple 로그인 오류', errorMessage);
       set({ isLoggedIn: false });
     } finally {
       set({ isLoading: false });
@@ -260,16 +268,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoggedIn: true,
           userId: data.user.id,
         });
-        // 로그인 성공 후 프로필 가져오기
-        await get().fetchUserProfile();
-        // 로그인 성공 후 레코드 가져오기
-        useRecordStore.getState().fetchRecords().catch(() => {});
+        // 로그인 성공 후 공통 후처리
+        await get().handlePostLogin();
         
         return true;
       }
       return false;
-    } catch (error: any) {
-      Alert.alert('이메일 로그인 오류', error.message || '알 수 없는 오류가 발생했습니다.');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.';
+      Alert.alert('이메일 로그인 오류', errorMessage);
       set({ isLoggedIn: false });
       return false;
     } finally {

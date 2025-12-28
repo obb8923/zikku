@@ -46,7 +46,7 @@ export async function getUserProfile(): Promise<UserProfile | null> {
         .from('users')
         .select('nickname, avatar_url, code')
         .eq('id', user.id)
-        .maybeSingle(); // .single() 대신 .maybeSingle() 사용 (레코드가 없어도 에러 발생 안 함)
+        .maybeSingle(); // .single() 대신 .maybeSingle() 사용 (기록가 없어도 에러 발생 안 함)
       
       // profile이 존재하면 데이터 설정
       if (profile) {
@@ -249,7 +249,7 @@ export async function uploadAvatarImage(imageData: ImageData): Promise<string> {
       .getPublicUrl(filePath);
     
     return urlData.publicUrl;
-  } catch (error: any) {
+  } catch (error: unknown) {
     throw error;
   }
 }

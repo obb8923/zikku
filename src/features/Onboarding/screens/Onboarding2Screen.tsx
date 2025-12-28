@@ -63,7 +63,7 @@ export const Onboarding2Screen = () => {
       <View className="flex-1 py-6 justify-between bg-[#EFEFEF]">
         {/* 제목 영역 */}
         <View className="items-center justify-center flex-1 mb-6">
-          <Text text="구슬에 담아 기록하세요" type="title1" className="text-center text-black font-bold" />
+          <Text text="구슬에 담아기록하세요" type="title1" className="text-center text-black font-bold" />
           <Text text="이 순간이 잊혀지지 않도록" type="title3" className="text-center text-text-2" />
           </View>
           {/* 히어로 */}

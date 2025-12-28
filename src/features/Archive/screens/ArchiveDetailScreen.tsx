@@ -8,15 +8,15 @@ import MapView, { Region, Marker } from 'react-native-maps';
 import { useRecordStore } from '@stores/recordStore';
 import { DEVICE_HEIGHT } from '@constants/NORMAL';
 import { BUTTON_SIZE_MEDIUM } from '@constants/NORMAL';
-import { ZOOM_LEVEL } from '@/features/Map/constants/MAP';
+import { ZOOM_LEVEL } from '@features/Map/constants/MAP';
 import { type ChipTypeKey, CHIP_TYPE, getChipTypeFromCategory } from '@constants/CHIP';
 import { Chip, LiquidGlassButton, Text, LiquidGlassTextButton, CategorySelectModal, LiquidGlassInput } from '@components/index';
-import { MapControls } from '@/features/Map/components/MapControls';
+import { MapControls } from '@features/Map/components/MapControls';
 import { deleteRecord, updateRecord } from '@libs/supabase/recordService';
 import { useAuthStore } from '@stores/authStore';
 import { Background } from '@components/Background';
 import ChevronLeft from '@assets/svgs/ChevronLeft.svg';
-import { zoomToDelta } from '@/features/Map/utils/mapUtils';
+import { zoomToDelta } from '@features/Map/utils/mapUtils';
 
 type ArchiveDetailScreenNavigationProp = NativeStackNavigationProp<MapStackParamList, 'ArchiveDetail'>;
 type ArchiveDetailScreenRouteProp = RouteProp<MapStackParamList, 'ArchiveDetail'>;
@@ -196,8 +196,9 @@ export const ArchiveDetailScreen = () => {
 
       // 저장 성공 후 화면 닫기
       navigation.goBack();
-    } catch (error: any) {
-      Alert.alert('오류', error.message || '레코드 수정에 실패했습니다.');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : '기록 수정에 실패했습니다.';
+      Alert.alert('오류', errorMessage);
       setIsSaving(false);
     }
   }, [record, selectedCategory, selectedLocation, note, userId, updateRecordInStore, hasChanges, navigation]);
@@ -210,7 +211,7 @@ export const ArchiveDetailScreen = () => {
     
     Alert.alert(
       '삭제 확인',
-      '정말로 이 레코드를 삭제하시겠습니까?',
+      '정말로 이 기록를 삭제하시겠습니까?',
       [
         {
           text: '취소',
@@ -225,7 +226,7 @@ export const ArchiveDetailScreen = () => {
               await deleteRecord(record.id);
               removeRecordFromStore(record.id);
               
-              Alert.alert('성공', '레코드가 삭제되었습니다.', [
+              Alert.alert('성공', '기록가 삭제되었습니다.', [
                 {
                   text: '확인',
                   onPress: () => {
@@ -233,8 +234,9 @@ export const ArchiveDetailScreen = () => {
                   },
                 },
               ]);
-            } catch (error: any) {
-              Alert.alert('오류', error.message || '레코드 삭제에 실패했습니다.');
+            } catch (error: unknown) {
+              const errorMessage = error instanceof Error ? error.message : '기록 삭제에 실패했습니다.';
+              Alert.alert('오류', errorMessage);
             } finally {
               setIsSaving(false);
             }
@@ -248,7 +250,7 @@ export const ArchiveDetailScreen = () => {
     return (
       <Background isStatusBarGap={false} isTabBarGap={false}>
         <View className="flex-1 items-center justify-center">
-          <Text type="body2" text="레코드를 찾을 수 없습니다." style={{ color: 'rgba(0, 0, 0, 0.5)' }} />
+          <Text type="body2" text="기록를 찾을 수 없습니다." style={{ color: 'rgba(0, 0, 0, 0.5)' }} />
         </View>
       </Background>
     );
